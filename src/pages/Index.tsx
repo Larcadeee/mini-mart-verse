@@ -139,7 +139,7 @@ const Index = () => {
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
                   MiniMart Online
                 </h1>
-                <p className="text-sm text-gray-600">Filipino Snacks & More</p>
+                
               </div>
             </div>
             
@@ -196,11 +196,11 @@ const Index = () => {
       <section className="py-16 px-4">
         <div className="container mx-auto text-center">
           <h2 className="text-5xl font-bold text-gray-800 mb-6">
-            Authentic Filipino Snacks,
-            <span className="bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent"> Delivered Fresh</span>
+            Quick Order
+            <span className="bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent"> Snacks</span>
           </h2>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Discover the authentic taste of the Philippines with our curated selection of traditional snacks and delicacies.
+            No time to shop? Satisfy your cravings in a click — order now and pick your favorites!
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button size="lg" className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white px-8 py-3 text-lg">
@@ -225,10 +225,10 @@ const Index = () => {
         <div className="container mx-auto">
           <div className="text-center mb-12">
             <h3 className="text-3xl font-bold text-gray-800 mb-4">
-              {searchQuery ? 'Search Results' : 'Featured Filipino Snacks'}
+              {searchQuery ? 'Search Results' : 'Featured Snacks'}
             </h3>
             <p className="text-lg text-gray-600">
-              {searchQuery ? `Found ${displayProducts.length} products` : 'Taste the authentic flavors of the Philippines'}
+              {searchQuery ? `Found ${displayProducts.length} products` : "Indulge in a delightful selection of snacks and treats. Whether you're craving something sweet, salty or savory, we've got the perfect bite waiting for you!"}
             </p>
           </div>
           
@@ -312,7 +312,7 @@ const Index = () => {
                 <ShoppingCart className="h-8 w-8 text-white" />
               </div>
               <h4 className="text-xl font-bold text-white mb-2">Authentic Products</h4>
-              <p className="text-blue-100">Sourced directly from trusted Filipino suppliers</p>
+              <p className="text-blue-100">Sourced directly from trusted suppliers</p>
             </div>
             
             <div className="text-center">
@@ -327,8 +327,8 @@ const Index = () => {
               <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <ShoppingCart className="h-8 w-8 text-white" />
               </div>
-              <h4 className="text-xl font-bold text-white mb-2">Fast Delivery</h4>
-              <p className="text-blue-100">Quick delivery to bring Filipino flavors to you</p>
+              <h4 className="text-xl font-bold text-white mb-2">Fast Order</h4>
+              <p className="text-blue-100">Quick Selection of your choices</p>
             </div>
           </div>
         </div>
@@ -344,9 +344,9 @@ const Index = () => {
               </div>
               <h5 className="text-xl font-bold">MiniMart Online</h5>
             </div>
-            <p className="text-gray-400 mb-4">Your Filipino Snack Destination</p>
+            <p className="text-gray-400 mb-4">Your Snack Destination</p>
             <p className="text-sm text-gray-500">
-              © 2024 MiniMart Online. Bringing authentic Filipino flavors to your doorstep.
+              © 2024 MiniMart Online. Bringing convenience.
             </p>
           </div>
         </div>
