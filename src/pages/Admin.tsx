@@ -61,7 +61,6 @@ const Admin = () => {
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
                   Admin Dashboard
                 </h1>
-                <p className="text-sm text-gray-600">MiniMart Online Control Panel</p>
               </div>
             </div>
             

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -132,6 +131,7 @@ const Index = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
+              
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
                 <ShoppingCart className="h-6 w-6 text-white" />
               </div>
@@ -179,13 +179,23 @@ const Index = () => {
                   </Button>
                 </div>
               ) : (
-                <Button
-                  onClick={() => navigate('/auth')}
-                  className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
-                >
-                  <User className="h-4 w-4 mr-2" />
-                  Sign In
-                </Button>
+                <>
+                  <Button
+                    onClick={() => navigate('/admin')}
+                    variant="outline"
+                    size="sm"
+                    className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                  >
+                    Admin
+                  </Button>
+                  <Button
+                    onClick={() => navigate('/auth')}
+                    className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Sign In
+                  </Button>
+                </>
               )}
             </div>
           </div>
