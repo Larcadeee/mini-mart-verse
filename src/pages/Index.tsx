@@ -356,7 +356,7 @@ const Index = () => {
             </div>
             <p className="text-gray-400 mb-4">Your Snack Destination</p>
             <p className="text-sm text-gray-500">
-              © 2024 MiniMart Online. Bringing convenience.
+              © 2025 MiniMart Online by Gerard.
             </p>
           </div>
         </div>
