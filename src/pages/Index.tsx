@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingCart, Star, Heart, Search, User, BarChart3, LogOut } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { ShoppingCart, Star, Heart, Search, User, LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -154,13 +154,6 @@ const Index = () => {
                   className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
                 />
               </div>
-              
-              <Link to="/admin">
-                <Button variant="outline" size="sm" className="flex items-center space-x-2">
-                  <BarChart3 className="h-4 w-4" />
-                  <span>Admin</span>
-                </Button>
-              </Link>
 
               {user ? (
                 <div className="flex items-center space-x-2">
@@ -332,7 +325,7 @@ const Index = () => {
             
             <div className="text-center">
               <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <BarChart3 className="h-8 w-8 text-white" />
+                <ShoppingCart className="h-8 w-8 text-white" />
               </div>
               <h4 className="text-xl font-bold text-white mb-2">Fast Delivery</h4>
               <p className="text-blue-100">Quick delivery to bring Filipino flavors to you</p>

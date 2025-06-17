@@ -10,13 +10,12 @@ import {
   Package, 
   TrendingUp, 
   DollarSign, 
-  ShoppingCart,
-  Eye,
-  Edit,
-  Trash2,
-  Plus
+  ShoppingCart
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import ProductManagement from "@/components/admin/ProductManagement";
+import BuyerManagement from "@/components/admin/BuyerManagement";
+import TransactionManagement from "@/components/admin/TransactionManagement";
 
 const mockData = {
   stats: {
@@ -106,7 +105,7 @@ const Admin = () => {
                   <DollarSign className="h-4 w-4" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">${mockData.stats.totalSales.toLocaleString()}</div>
+                  <div className="text-2xl font-bold">₱{mockData.stats.totalSales.toLocaleString()}</div>
                   <p className="text-xs text-blue-200">+12.3% from last month</p>
                 </CardContent>
               </Card>
@@ -168,7 +167,7 @@ const Admin = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-green-600">${product.revenue.toFixed(2)}</p>
+                        <p className="font-bold text-green-600">₱{product.revenue.toFixed(2)}</p>
                       </div>
                     </div>
                   ))}
@@ -196,7 +195,7 @@ const Admin = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-blue-600">${buyer.total.toFixed(2)}</p>
+                        <p className="font-bold text-blue-600">₱{buyer.total.toFixed(2)}</p>
                       </div>
                     </div>
                   ))}
@@ -206,85 +205,15 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="products" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Product Management</h2>
-              <Button className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Product
-              </Button>
-            </div>
-            
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-center py-12">
-                  <Package className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Product Management</h3>
-                  <p className="text-gray-600 mb-4">Manage your inventory, add new products, and track stock levels.</p>
-                  <Button variant="outline">View All Products</Button>
-                </div>
-              </CardContent>
-            </Card>
+            <ProductManagement />
           </TabsContent>
 
           <TabsContent value="buyers" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">Buyer Management</h2>
-              <Button className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Buyer
-              </Button>
-            </div>
-            
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-center py-12">
-                  <Users className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Buyer Management</h3>
-                  <p className="text-gray-600 mb-4">View and manage customer accounts, order history, and preferences.</p>
-                  <Button variant="outline">View All Buyers</Button>
-                </div>
-              </CardContent>
-            </Card>
+            <BuyerManagement />
           </TabsContent>
 
           <TabsContent value="transactions" className="space-y-6">
-            <h2 className="text-2xl font-bold">Recent Transactions</h2>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Transaction History</CardTitle>
-                <CardDescription>Recent orders and their verification status</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {mockData.recentTransactions.map((transaction) => (
-                    <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <div>
-                          <p className="font-medium">{transaction.buyer}</p>
-                          <p className="text-sm text-gray-600">{transaction.product}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <Badge variant={transaction.status === 'Verified' ? 'default' : 'secondary'}>
-                          {transaction.status}
-                        </Badge>
-                        <p className="font-bold">${transaction.amount}</p>
-                        <p className="text-sm text-gray-500">{transaction.time}</p>
-                        <div className="flex space-x-2">
-                          <Button size="sm" variant="outline">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <TransactionManagement />
           </TabsContent>
         </Tabs>
       </div>
