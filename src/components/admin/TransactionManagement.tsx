@@ -207,7 +207,7 @@ const TransactionManagement = () => {
                 <TableHead>Customer</TableHead>
                 <TableHead>Quantity</TableHead>
                 <TableHead>Amount</TableHead>
-                <TableHead>Status</Table Head>
+                <TableHead>Status</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
