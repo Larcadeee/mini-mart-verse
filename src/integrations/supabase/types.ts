@@ -9,6 +9,81 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          is_active: boolean | null
+          password_hash: string
+          role: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          password_hash: string
+          role?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          password_hash?: string
+          role?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      buyers: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string | null
+          registration_date: string | null
+          status: string | null
+          total_orders: number | null
+          total_spent: number | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          phone?: string | null
+          registration_date?: string | null
+          status?: string | null
+          total_orders?: number | null
+          total_spent?: number | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          registration_date?: string | null
+          status?: string | null
+          total_orders?: number | null
+          total_spent?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cart_items: {
         Row: {
           created_at: string
@@ -43,6 +118,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      dashboard_metrics: {
+        Row: {
+          id: string
+          last_updated: string | null
+          metric_name: string
+          metric_value: number
+        }
+        Insert: {
+          id?: string
+          last_updated?: string | null
+          metric_name: string
+          metric_value?: number
+        }
+        Update: {
+          id?: string
+          last_updated?: string | null
+          metric_name?: string
+          metric_value?: number
+        }
+        Relationships: []
       }
       products: {
         Row: {
@@ -83,12 +179,75 @@ export type Database = {
         }
         Relationships: []
       }
+      transactions: {
+        Row: {
+          buyer_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          payment_method: string | null
+          product_id: string | null
+          quantity: number
+          status: string | null
+          total_amount: number
+          transaction_date: string | null
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          buyer_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          product_id?: string | null
+          quantity?: number
+          status?: string | null
+          total_amount: number
+          transaction_date?: string | null
+          unit_price: number
+          updated_at?: string
+        }
+        Update: {
+          buyer_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          product_id?: string | null
+          quantity?: number
+          status?: string | null
+          total_amount?: number
+          transaction_date?: string | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_buyer_id_fkey"
+            columns: ["buyer_id"]
+            isOneToOne: false
+            referencedRelation: "buyers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      update_dashboard_metrics: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

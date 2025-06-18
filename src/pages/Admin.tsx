@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,42 +10,148 @@ import {
   Package, 
   TrendingUp, 
   DollarSign, 
-  ShoppingCart
+  ShoppingCart,
+  LogOut
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import AdminAuth from "@/components/admin/AdminAuth";
 import ProductManagement from "@/components/admin/ProductManagement";
 import BuyerManagement from "@/components/admin/BuyerManagement";
 import TransactionManagement from "@/components/admin/TransactionManagement";
+import ExcelExport from "@/components/admin/ExcelExport";
 
-const mockData = {
-  stats: {
-    totalSales: 15420.50,
-    totalTransactions: 342,
-    totalProducts: 89,
-    totalBuyers: 156
-  },
-  topProducts: [
-    { id: 1, name: "Premium Coffee Beans", sales: 156, revenue: 2025.44 },
-    { id: 2, name: "Organic Snack Mix", sales: 134, revenue: 1137.66 },
-    { id: 3, name: "Fresh Fruit Bowl", sales: 98, revenue: 1567.02 },
-    { id: 4, name: "Artisan Chocolate", sales: 87, revenue: 869.13 }
-  ],
-  topBuyers: [
-    { id: 1, name: "John Smith", orders: 23, total: 456.78 },
-    { id: 2, name: "Sarah Johnson", orders: 19, total: 389.45 },
-    { id: 3, name: "Mike Wilson", orders: 15, total: 298.90 },
-    { id: 4, name: "Emma Davis", orders: 12, total: 234.56 }
-  ],
-  recentTransactions: [
-    { id: 1, buyer: "John Smith", product: "Premium Coffee Beans", amount: 12.99, status: "Verified", time: "2 hours ago" },
-    { id: 2, buyer: "Sarah Johnson", product: "Organic Snack Mix", amount: 8.49, status: "Pending", time: "3 hours ago" },
-    { id: 3, buyer: "Mike Wilson", product: "Fresh Fruit Bowl", amount: 15.99, status: "Verified", time: "5 hours ago" },
-    { id: 4, buyer: "Emma Davis", product: "Artisan Chocolate", amount: 9.99, status: "Verified", time: "6 hours ago" }
-  ]
-};
+interface DashboardStats {
+  totalSales: number;
+  totalTransactions: number;
+  totalProducts: number;
+  totalBuyers: number;
+}
+
+interface TopProduct {
+  id: string;
+  name: string;
+  sales: number;
+  revenue: number;
+}
+
+interface TopBuyer {
+  id: string;
+  name: string;
+  orders: number;
+  total: number;
+}
 
 const Admin = () => {
+  const { adminUser, loading: authLoading, logout } = useAdminAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [stats, setStats] = useState<DashboardStats>({
+    totalSales: 0,
+    totalTransactions: 0,
+    totalProducts: 0,
+    totalBuyers: 0
+  });
+  const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
+  const [topBuyers, setTopBuyers] = useState<TopBuyer[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (adminUser) {
+      fetchDashboardData();
+    }
+  }, [adminUser]);
+
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch dashboard metrics
+      const { data: metrics, error: metricsError } = await supabase
+        .from('dashboard_metrics')
+        .select('*');
+
+      if (metricsError) throw metricsError;
+
+      const statsData = {
+        totalSales: metrics?.find(m => m.metric_name === 'total_sales')?.metric_value || 0,
+        totalTransactions: metrics?.find(m => m.metric_name === 'total_transactions')?.metric_value || 0,
+        totalProducts: metrics?.find(m => m.metric_name === 'total_products')?.metric_value || 0,
+        totalBuyers: metrics?.find(m => m.metric_name === 'total_buyers')?.metric_value || 0
+      };
+
+      setStats(statsData);
+
+      // Fetch top products
+      const { data: productsData, error: productsError } = await supabase
+        .from('transactions')
+        .select(`
+          product_id,
+          quantity,
+          total_amount,
+          products (
+            id,
+            name
+          )
+        `);
+
+      if (productsError) throw productsError;
+
+      const productSales = productsData?.reduce((acc: any, transaction) => {
+        const productId = transaction.product_id;
+        const productName = transaction.products?.name || 'Unknown';
+        
+        if (!acc[productId]) {
+          acc[productId] = {
+            id: productId,
+            name: productName,
+            sales: 0,
+            revenue: 0
+          };
+        }
+        
+        acc[productId].sales += transaction.quantity;
+        acc[productId].revenue += Number(transaction.total_amount);
+        
+        return acc;
+      }, {});
+
+      const sortedProducts = Object.values(productSales || {})
+        .sort((a: any, b: any) => b.revenue - a.revenue)
+        .slice(0, 4);
+
+      setTopProducts(sortedProducts as TopProduct[]);
+
+      // Fetch top buyers
+      const { data: buyersData, error: buyersError } = await supabase
+        .from('buyers')
+        .select('*')
+        .order('total_spent', { ascending: false })
+        .limit(4);
+
+      if (buyersError) throw buyersError;
+
+      const topBuyersData = buyersData?.map(buyer => ({
+        id: buyer.id,
+        name: buyer.full_name,
+        orders: buyer.total_orders,
+        total: Number(buyer.total_spent)
+      })) || [];
+
+      setTopBuyers(topBuyersData);
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (authLoading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
+
+  if (!adminUser) {
+    return <AdminAuth onAuthSuccess={() => window.location.reload()} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
@@ -61,15 +167,23 @@ const Admin = () => {
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
                   Admin Dashboard
                 </h1>
+                <p className="text-sm text-gray-600">Welcome, {adminUser.full_name || adminUser.email}</p>
               </div>
             </div>
             
-            <Link to="/">
-              <Button variant="outline" size="sm" className="flex items-center space-x-2">
-                <ShoppingCart className="h-4 w-4" />
-                <span>Back to Store</span>
+            <div className="flex items-center space-x-4">
+              <ExcelExport />
+              <Link to="/">
+                <Button variant="outline" size="sm" className="flex items-center space-x-2">
+                  <ShoppingCart className="h-4 w-4" />
+                  <span>Back to Store</span>
+                </Button>
+              </Link>
+              <Button variant="outline" size="sm" onClick={logout}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
               </Button>
-            </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -104,8 +218,8 @@ const Admin = () => {
                   <DollarSign className="h-4 w-4" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">₱{mockData.stats.totalSales.toLocaleString()}</div>
-                  <p className="text-xs text-blue-200">+12.3% from last month</p>
+                  <div className="text-2xl font-bold">₱{Number(stats.totalSales).toLocaleString()}</div>
+                  <p className="text-xs text-blue-200">From all transactions</p>
                 </CardContent>
               </Card>
 
@@ -115,8 +229,8 @@ const Admin = () => {
                   <TrendingUp className="h-4 w-4" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{mockData.stats.totalTransactions}</div>
-                  <p className="text-xs text-green-200">+8.7% from last month</p>
+                  <div className="text-2xl font-bold">{stats.totalTransactions}</div>
+                  <p className="text-xs text-green-200">Total completed orders</p>
                 </CardContent>
               </Card>
 
@@ -126,8 +240,8 @@ const Admin = () => {
                   <Package className="h-4 w-4" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{mockData.stats.totalProducts}</div>
-                  <p className="text-xs text-orange-200">+5 new this month</p>
+                  <div className="text-2xl font-bold">{stats.totalProducts}</div>
+                  <p className="text-xs text-orange-200">Available in inventory</p>
                 </CardContent>
               </Card>
 
@@ -137,8 +251,8 @@ const Admin = () => {
                   <Users className="h-4 w-4" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{mockData.stats.totalBuyers}</div>
-                  <p className="text-xs text-purple-200">+15 new this month</p>
+                  <div className="text-2xl font-bold">{stats.totalBuyers}</div>
+                  <p className="text-xs text-purple-200">Registered customers</p>
                 </CardContent>
               </Card>
             </div>
@@ -151,10 +265,10 @@ const Admin = () => {
                     <TrendingUp className="h-5 w-5 text-green-600" />
                     <span>Top Products</span>
                   </CardTitle>
-                  <CardDescription>Best selling items this month</CardDescription>
+                  <CardDescription>Best selling items by revenue</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {mockData.topProducts.map((product, index) => (
+                  {topProducts.map((product, index) => (
                     <div key={product.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center space-x-3">
                         <Badge variant="secondary" className="w-8 h-8 rounded-full flex items-center justify-center">
@@ -179,10 +293,10 @@ const Admin = () => {
                     <Users className="h-5 w-5 text-blue-600" />
                     <span>Top Buyers</span>
                   </CardTitle>
-                  <CardDescription>Most active customers this month</CardDescription>
+                  <CardDescription>Highest spending customers</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {mockData.topBuyers.map((buyer, index) => (
+                  {topBuyers.map((buyer, index) => (
                     <div key={buyer.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center space-x-3">
                         <Badge variant="secondary" className="w-8 h-8 rounded-full flex items-center justify-center">
