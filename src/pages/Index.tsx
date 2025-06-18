@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +20,11 @@ interface Product {
   is_featured: boolean;
 }
 
+interface UserProfile {
+  full_name: string;
+  role: string;
+}
+
 const Index = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -27,13 +33,36 @@ const Index = () => {
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     fetchProducts();
     if (user) {
       fetchCartItems();
+      fetchUserProfile();
     }
   }, [user]);
+
+  const fetchUserProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, role')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return;
+      }
+
+      setUserProfile(data);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -131,7 +160,6 @@ const Index = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              
               <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
                 <ShoppingCart className="h-6 w-6 text-white" />
               </div>
@@ -139,7 +167,6 @@ const Index = () => {
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
                   MiniMart Online
                 </h1>
-                
               </div>
             </div>
             
@@ -157,7 +184,18 @@ const Index = () => {
 
               {user ? (
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600">Welcome, {user.email}</span>
+                  <span className="text-sm text-gray-600">
+                    Welcome, {userProfile?.full_name || user.email}
+                  </span>
+                  {userProfile?.role === 'admin' && (
+                    <Button
+                      onClick={() => navigate('/admin')}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Admin Dashboard
+                    </Button>
+                  )}
                   <Button
                     onClick={() => navigate('/cart')}
                     className="relative bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
@@ -179,23 +217,13 @@ const Index = () => {
                   </Button>
                 </div>
               ) : (
-                <>
-                  <Button
-                    onClick={() => navigate('/admin')}
-                    variant="outline"
-                    size="sm"
-                    className="border-blue-600 text-blue-600 hover:bg-blue-50"
-                  >
-                    Admin
-                  </Button>
-                  <Button
-                    onClick={() => navigate('/auth')}
-                    className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    Sign In
-                  </Button>
-                </>
+                <Button
+                  onClick={() => navigate('/auth')}
+                  className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  Sign In
+                </Button>
               )}
             </div>
           </div>

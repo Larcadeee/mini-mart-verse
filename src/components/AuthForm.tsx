@@ -7,17 +7,40 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface AuthFormProps {
   onSuccess: () => void;
 }
 
 const AuthForm = ({ onSuccess }: AuthFormProps) => {
+  const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const checkUserRole = async (userId: string) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('role, full_name')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
+
+      return profile;
+    } catch (error) {
+      console.error('Error in checkUserRole:', error);
+      return null;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,23 +48,39 @@ const AuthForm = ({ onSuccess }: AuthFormProps) => {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
+        
         if (error) throw error;
-        toast.success('Welcome back!');
+
+        if (data.user) {
+          const profile = await checkUserRole(data.user.id);
+          
+          if (profile?.role === 'admin') {
+            toast.success(`Welcome back, ${profile.full_name || email}!`);
+            navigate('/admin');
+          } else {
+            toast.success(`Welcome back, ${profile?.full_name || email}!`);
+            navigate('/');
+          }
+        }
       } else {
-        const redirectUrl = `${window.location.origin}/`;
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: redirectUrl
+            data: {
+              full_name: fullName,
+              role: 'buyer'
+            }
           }
         });
+        
         if (error) throw error;
         toast.success('Account created successfully! Please check your email to verify your account.');
+        navigate('/');
       }
       onSuccess();
     } catch (error: any) {
@@ -65,6 +104,24 @@ const AuthForm = ({ onSuccess }: AuthFormProps) => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    id="fullName"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="pl-10"
+                    required
+                  />
+                </div>
+              </div>
+            )}
+            
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">

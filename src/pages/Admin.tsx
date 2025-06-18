@@ -20,7 +20,8 @@ import AdminAuth from "@/components/admin/AdminAuth";
 import ProductManagement from "@/components/admin/ProductManagement";
 import BuyerManagement from "@/components/admin/BuyerManagement";
 import TransactionManagement from "@/components/admin/TransactionManagement";
-import ExcelExport from "@/components/admin/ExcelExport";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 interface DashboardStats {
   totalSales: number;
@@ -43,8 +44,14 @@ interface TopBuyer {
   total: number;
 }
 
+interface UserProfile {
+  full_name: string;
+  role: string;
+}
+
 const Admin = () => {
-  const { adminUser, loading: authLoading, logout } = useAdminAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [stats, setStats] = useState<DashboardStats>({
     totalSales: 0,
@@ -55,12 +62,41 @@ const Admin = () => {
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
   const [topBuyers, setTopBuyers] = useState<TopBuyer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    if (adminUser) {
+    if (user) {
+      fetchUserProfile();
       fetchDashboardData();
     }
-  }, [adminUser]);
+  }, [user]);
+
+  const fetchUserProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, role')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return;
+      }
+
+      setUserProfile(data);
+      
+      // If user is not admin, redirect to home
+      if (data.role !== 'admin') {
+        navigate('/');
+        return;
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -145,12 +181,18 @@ const Admin = () => {
     }
   };
 
-  if (authLoading) {
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/');
+  };
+
+  // Check if user is authenticated and has admin role
+  if (!user || !userProfile) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
-  if (!adminUser) {
-    return <AdminAuth onAuthSuccess={() => window.location.reload()} />;
+  if (userProfile.role !== 'admin') {
+    return <div className="flex justify-center items-center h-screen">Access Denied</div>;
   }
 
   return (
@@ -167,19 +209,18 @@ const Admin = () => {
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
                   Admin Dashboard
                 </h1>
-                <p className="text-sm text-gray-600">Welcome, {adminUser.full_name || adminUser.email}</p>
+                <p className="text-sm text-gray-600">Welcome, {userProfile.full_name || user.email}</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-4">
-              <ExcelExport />
               <Link to="/">
                 <Button variant="outline" size="sm" className="flex items-center space-x-2">
                   <ShoppingCart className="h-4 w-4" />
                   <span>Back to Store</span>
                 </Button>
               </Link>
-              <Button variant="outline" size="sm" onClick={logout}>
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
               </Button>
