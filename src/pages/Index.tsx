@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ShoppingCart, Star, Heart, Search, User, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +35,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [videoLoaded, setVideoLoaded] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -154,8 +156,62 @@ const Index = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 flex items-center justify-center">
-        <div className="text-lg">Loading products...</div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50">
+        {/* Header Skeleton */}
+        <header className="bg-white shadow-lg border-b border-gray-200">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Skeleton className="w-10 h-10 rounded-lg" />
+                <Skeleton className="w-48 h-8" />
+              </div>
+              <div className="flex items-center space-x-4">
+                <Skeleton className="w-64 h-10" />
+                <Skeleton className="w-24 h-10" />
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Hero Skeleton */}
+        <section className="py-20 px-4">
+          <div className="container mx-auto text-center">
+            <Skeleton className="w-96 h-16 mx-auto mb-6" />
+            <Skeleton className="w-2xl h-6 mx-auto mb-8" />
+            <div className="flex justify-center gap-4">
+              <Skeleton className="w-32 h-12" />
+              <Skeleton className="w-40 h-12" />
+            </div>
+          </div>
+        </section>
+
+        {/* Products Skeleton */}
+        <section className="py-16 px-4 bg-white">
+          <div className="container mx-auto">
+            <Skeleton className="w-64 h-8 mx-auto mb-12" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, i) => (
+                <Card key={i} className="group">
+                  <CardHeader className="p-0">
+                    <Skeleton className="w-full h-48 rounded-t-lg" />
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <Skeleton className="w-20 h-6 mb-2" />
+                    <Skeleton className="w-full h-6 mb-2" />
+                    <Skeleton className="w-full h-12 mb-3" />
+                    <div className="flex justify-between items-center">
+                      <Skeleton className="w-20 h-8" />
+                      <Skeleton className="w-16 h-4" />
+                    </div>
+                  </CardContent>
+                  <CardFooter className="p-4 pt-0">
+                    <Skeleton className="w-full h-10" />
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
       </div>
     );
   }
@@ -237,19 +293,24 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero Section with Video Background */}
+      {/* Hero Section with Optimized Video Background */}
       <section className="relative py-20 px-4 overflow-hidden">
-        {/* Video Background */}
+        {/* Video Background with Lazy Loading */}
         <div className="absolute inset-0 z-0">
+          {!videoLoaded && (
+            <div className="w-full h-full bg-gradient-to-r from-blue-600 to-orange-500" />
+          )}
           <video
             autoPlay
             loop
             muted
             playsInline
-            className="w-full h-full object-cover"
+            loading="lazy"
+            className={`w-full h-full object-cover transition-opacity duration-500 ${videoLoaded ? 'opacity-100' : 'opacity-0'}`}
+            onLoadedData={() => setVideoLoaded(true)}
+            poster="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iZ3JhZGllbnQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojMjU2M2ViO3N0b3Atb3BhY2l0eToxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNmOTczMTY7c3RvcC1vcGFjaXR5OjEiIC8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0idXJsKCNncmFkaWVudCkiIC8+Cjwvc3ZnPgo="
           >
             <source src="https://player.vimeo.com/external/371638154.sd.mp4?s=d3e0e0e7c1e1c1e1c1e1c1e1c1e1c1e1&profile_id=164&oauth2_token_id=57447761" type="video/mp4" />
-            {/* Fallback for browsers that don't support video */}
           </video>
           <div className="absolute inset-0 bg-gradient-to-r from-blue-600/70 to-orange-500/70"></div>
         </div>
