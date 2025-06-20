@@ -137,6 +137,13 @@ const Index = () => {
     toast.success('Signed out successfully');
   };
 
+  const handleShopNow = () => {
+    const featuredSection = document.getElementById('featured-products');
+    if (featuredSection) {
+      featuredSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.category.toLowerCase().includes(searchQuery.toLowerCase())
@@ -230,25 +237,44 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="py-16 px-4">
-        <div className="container mx-auto text-center">
-          <h2 className="text-5xl font-bold text-gray-800 mb-6">
+      {/* Hero Section with Video Background */}
+      <section className="relative py-20 px-4 overflow-hidden">
+        {/* Video Background */}
+        <div className="absolute inset-0 z-0">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+          >
+            <source src="https://player.vimeo.com/external/371638154.sd.mp4?s=d3e0e0e7c1e1c1e1c1e1c1e1c1e1c1e1&profile_id=164&oauth2_token_id=57447761" type="video/mp4" />
+            {/* Fallback for browsers that don't support video */}
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/70 to-orange-500/70"></div>
+        </div>
+        
+        <div className="container mx-auto text-center relative z-10">
+          <h2 className="text-5xl font-bold text-white mb-6">
             Quick Order
-            <span className="bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent"> Snacks</span>
+            <span className="text-orange-200"> Snacks</span>
           </h2>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
             No time to shop? Satisfy your cravings in a click — order now and pick your favorites!
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Button size="lg" className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white px-8 py-3 text-lg">
+            <Button 
+              size="lg" 
+              onClick={handleShopNow}
+              className="bg-gradient-to-r from-orange-500 to-blue-600 hover:from-orange-600 hover:to-blue-700 text-white px-8 py-3 text-lg shadow-lg"
+            >
               Shop Now
             </Button>
             {!user && (
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 text-lg"
+                className="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-3 text-lg bg-white/10 backdrop-blur-sm"
                 onClick={() => navigate('/auth')}
               >
                 Create Account
@@ -259,7 +285,7 @@ const Index = () => {
       </section>
 
       {/* Featured Products */}
-      <section className="py-16 px-4 bg-white">
+      <section id="featured-products" className="py-16 px-4 bg-white">
         <div className="container mx-auto">
           <div className="text-center mb-12">
             <h3 className="text-3xl font-bold text-gray-800 mb-4">
