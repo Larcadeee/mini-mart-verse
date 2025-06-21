@@ -1,120 +1,101 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import AdminAuth from "@/components/admin/AdminAuth";
+import AdminSetup from "@/components/admin/AdminSetup";
 import ProductManagement from "@/components/admin/ProductManagement";
 import BuyerManagement from "@/components/admin/BuyerManagement";
 import TransactionManagement from "@/components/admin/TransactionManagement";
-import AdminSetup from "@/components/admin/AdminSetup";
-import { Button } from "@/components/ui/button";
-import { LogOut, ShoppingCart } from "lucide-react";
 
 const Admin = () => {
-  const { adminUser, loading, logout, login } = useAdminAuth();
+  console.log('Admin page component rendered');
+  const { adminUser, loading, login } = useAdminAuth();
+  const [initializing, setInitializing] = useState(true);
 
-  if (loading) {
+  useEffect(() => {
+    console.log('Admin useEffect - loading:', loading, 'adminUser:', adminUser);
+    // Small delay to ensure proper initialization
+    const timer = setTimeout(() => {
+      setInitializing(false);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [loading, adminUser]);
+
+  console.log('Admin render state - loading:', loading, 'initializing:', initializing, 'adminUser:', !!adminUser);
+
+  // Show loading only during initial auth check
+  if (loading || initializing) {
+    console.log('Admin showing loading state');
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
-        <div className="text-lg">Loading...</div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading admin panel...</p>
+        </div>
       </div>
     );
   }
 
+  // Show login if not authenticated
   if (!adminUser) {
-    return <AdminAuth onAuthSuccess={login} />;
+    console.log('Admin showing login form');
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <AdminAuth onLogin={login} />
+        </div>
+      </div>
+    );
   }
 
+  console.log('Admin showing main dashboard');
+  
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
-      <div className="container mx-auto py-8 px-4">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-theme-primary rounded-lg flex items-center justify-center">
-              <ShoppingCart className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-theme-primary">MiniMart Admin</h1>
-              <p className="text-gray-600">Welcome back, {adminUser.full_name}</p>
-            </div>
-          </div>
-          <Button 
-            onClick={logout} 
-            variant="outline"
-            className="flex items-center space-x-2"
-          >
-            <LogOut className="h-4 w-4" />
-            <span>Logout</span>
-          </Button>
+    <div className="min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600">Welcome back, {adminUser.full_name}</p>
         </div>
 
-        <Tabs defaultValue="setup" className="space-y-6">
+        <Tabs defaultValue="setup" className="w-full">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="setup">Setup</TabsTrigger>
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="buyers">Buyers</TabsTrigger>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="setup">
+          <TabsContent value="setup" className="mt-6">
             <AdminSetup />
           </TabsContent>
 
-          <TabsContent value="products">
+          <TabsContent value="products" className="mt-6">
             <ProductManagement />
           </TabsContent>
 
-          <TabsContent value="buyers">
+          <TabsContent value="buyers" className="mt-6">
             <BuyerManagement />
           </TabsContent>
 
-          <TabsContent value="transactions">
+          <TabsContent value="transactions" className="mt-6">
             <TransactionManagement />
           </TabsContent>
 
-          <TabsContent value="overview">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Products</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">-</div>
-                  <p className="text-xs text-muted-foreground">Products in inventory</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">₱-</div>
-                  <p className="text-xs text-muted-foreground">Revenue generated</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Buyers</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">-</div>
-                  <p className="text-xs text-muted-foreground">Registered users</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Transactions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">-</div>
-                  <p className="text-xs text-muted-foreground">Total orders</p>
-                </CardContent>
-              </Card>
-            </div>
+          <TabsContent value="reports" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Reports</CardTitle>
+                <CardDescription>Analytics and reporting tools</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p>Reports functionality coming soon...</p>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
