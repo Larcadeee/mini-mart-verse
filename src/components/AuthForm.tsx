@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
@@ -19,6 +20,7 @@ const AuthForm = ({ onSuccess }: AuthFormProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [role, setRole] = useState('buyer');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -73,14 +75,21 @@ const AuthForm = ({ onSuccess }: AuthFormProps) => {
           options: {
             data: {
               full_name: fullName,
-              role: 'buyer'
-            }
+              role: role
+            },
+            emailRedirectTo: `${window.location.origin}/`
           }
         });
         
         if (error) throw error;
-        toast.success('Account created successfully! Please check your email to verify your account.');
-        navigate('/');
+        
+        if (role === 'admin') {
+          toast.success('Admin account created successfully! Please check your email to verify your account.');
+          navigate('/admin');
+        } else {
+          toast.success('Account created successfully! Please check your email to verify your account.');
+          navigate('/');
+        }
       }
       onSuccess();
     } catch (error: any) {
@@ -92,10 +101,10 @@ const AuthForm = ({ onSuccess }: AuthFormProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
+          <CardTitle className="text-2xl text-theme-primary">
             {isLogin ? 'Welcome Back' : 'Create Account'}
           </CardTitle>
           <CardDescription>
@@ -105,21 +114,36 @@ const AuthForm = ({ onSuccess }: AuthFormProps) => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    id="fullName"
-                    type="text"
-                    placeholder="Enter your full name"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="pl-10"
-                    required
-                  />
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      id="fullName"
+                      type="text"
+                      placeholder="Enter your full name"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="pl-10"
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="role">Role</Label>
+                  <Select value={role} onValueChange={setRole}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="buyer">Buyer</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
             )}
             
             <div className="space-y-2">
@@ -165,7 +189,7 @@ const AuthForm = ({ onSuccess }: AuthFormProps) => {
 
             <Button 
               type="submit" 
-              className="w-full bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+              className="w-full bg-theme-primary hover:bg-theme-primary/90"
               disabled={loading}
             >
               <User className="h-4 w-4 mr-2" />
@@ -177,7 +201,7 @@ const AuthForm = ({ onSuccess }: AuthFormProps) => {
             <Button
               variant="link"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-blue-600 hover:text-blue-700"
+              className="text-theme-primary hover:text-theme-primary/80"
             >
               {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </Button>

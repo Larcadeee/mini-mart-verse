@@ -27,11 +27,11 @@ const Header = ({ user, userProfile, cartItems, searchQuery, setSearchQuery, onS
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
+            <div className="w-10 h-10 bg-theme-primary rounded-lg flex items-center justify-center">
               <ShoppingCart className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold text-theme-primary">
                 MiniMart Online
               </h1>
             </div>
@@ -45,7 +45,7 @@ const Header = ({ user, userProfile, cartItems, searchQuery, setSearchQuery, onS
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-theme-primary focus:border-transparent w-64"
               />
             </div>
 
@@ -65,7 +65,7 @@ const Header = ({ user, userProfile, cartItems, searchQuery, setSearchQuery, onS
                 )}
                 <Button
                   onClick={() => navigate('/cart')}
-                  className="relative bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+                  className="relative bg-theme-primary hover:bg-theme-primary/90"
                 >
                   <ShoppingCart className="h-4 w-4 mr-2" />
                   Cart
@@ -86,7 +86,7 @@ const Header = ({ user, userProfile, cartItems, searchQuery, setSearchQuery, onS
             ) : (
               <Button
                 onClick={() => navigate('/auth')}
-                className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+                className="bg-theme-primary hover:bg-theme-primary/90"
               >
                 <User className="h-4 w-4 mr-2" />
                 Sign In

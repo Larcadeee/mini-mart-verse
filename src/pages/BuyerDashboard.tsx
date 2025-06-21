@@ -5,10 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
-import HeroSection from "@/components/landing/HeroSection";
 import ProductGrid from "@/components/landing/ProductGrid";
-import VideoPlayer from "@/components/landing/VideoPlayer";
-import FeaturesSection from "@/components/landing/FeaturesSection";
 import Footer from "@/components/layout/Footer";
 import LoadingSkeleton from "@/components/ui/LoadingSkeleton";
 
@@ -28,7 +25,7 @@ interface UserProfile {
   role: string;
 }
 
-const Index = () => {
+const BuyerDashboard = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
@@ -40,12 +37,14 @@ const Index = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    fetchProducts();
-    if (user) {
-      fetchCartItems();
-      fetchUserProfile();
+    if (!user) {
+      navigate('/auth');
+      return;
     }
-  }, [user]);
+    fetchProducts();
+    fetchCartItems();
+    fetchUserProfile();
+  }, [user, navigate]);
 
   const fetchUserProfile = async () => {
     if (!user) return;
@@ -105,10 +104,7 @@ const Index = () => {
   };
 
   const addToCart = async (productId: string) => {
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
+    if (!user) return;
 
     try {
       const { error } = await supabase
@@ -141,14 +137,8 @@ const Index = () => {
 
   const handleSignOut = async () => {
     await signOut();
+    navigate('/');
     toast.success('Signed out successfully');
-  };
-
-  const handleShopNow = () => {
-    const productsSection = document.getElementById('products-section');
-    if (productsSection) {
-      productsSection.scrollIntoView({ behavior: 'smooth' });
-    }
   };
 
   if (loading) {
@@ -166,20 +156,20 @@ const Index = () => {
         onSignOut={handleSignOut}
       />
 
-      <HeroSection
-        user={user}
-        onShopNow={handleShopNow}
-      />
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-theme-primary mb-4">
+            Welcome, {userProfile?.full_name || user?.email}!
+          </h1>
+          <p className="text-xl text-gray-600">Your Snack Dashboard</p>
+        </div>
 
-      <VideoPlayer />
-
-      {/* Featured Snacks Section */}
-      {featuredProducts.length > 0 && (
-        <section className="py-16 px-4" id="featured-products">
-          <div className="container mx-auto">
-            <div className="text-center mb-12">
-              <h3 className="text-3xl font-bold text-theme-primary mb-4">Featured Snacks</h3>
-              <p className="text-xl text-gray-600">Our handpicked favorites</p>
+        {/* Featured Snacks Section */}
+        {featuredProducts.length > 0 && (
+          <section className="mb-16">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-theme-primary mb-4">Featured Snacks</h2>
+              <p className="text-lg text-gray-600">Our handpicked favorites just for you</p>
             </div>
             <ProductGrid
               products={featuredProducts}
@@ -189,16 +179,14 @@ const Index = () => {
               onAddToCart={addToCart}
               onToggleWishlist={toggleWishlist}
             />
-          </div>
-        </section>
-      )}
+          </section>
+        )}
 
-      {/* All Snacks Section */}
-      <section className="py-16 px-4" id="products-section">
-        <div className="container mx-auto">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-theme-primary mb-4">All Snacks</h3>
-            <p className="text-xl text-gray-600">Browse our complete collection</p>
+        {/* All Snacks Section */}
+        <section>
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-theme-primary mb-4">All Snacks</h2>
+            <p className="text-lg text-gray-600">Browse our complete collection</p>
           </div>
           <ProductGrid
             products={products}
@@ -208,14 +196,12 @@ const Index = () => {
             onAddToCart={addToCart}
             onToggleWishlist={toggleWishlist}
           />
-        </div>
-      </section>
-
-      <FeaturesSection />
+        </section>
+      </div>
 
       <Footer />
     </div>
   );
 };
 
-export default Index;
+export default BuyerDashboard;

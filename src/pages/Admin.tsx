@@ -196,17 +196,17 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
       {/* Header */}
       <header className="bg-white shadow-lg border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-theme-primary rounded-lg flex items-center justify-center">
                 <BarChart3 className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
+                <h1 className="text-2xl font-bold text-theme-primary">
                   Admin Dashboard
                 </h1>
                 <p className="text-sm text-gray-600">Welcome, {userProfile.full_name || user.email}</p>
@@ -253,14 +253,14 @@ const Admin = () => {
           <TabsContent value="dashboard" className="space-y-6">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="bg-gradient-to-r from-blue-600 to-blue-700 text-white border-0">
+              <Card className="bg-gradient-to-r from-theme-primary to-orange-400 text-white border-0">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
                   <DollarSign className="h-4 w-4" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">₱{Number(stats.totalSales).toLocaleString()}</div>
-                  <p className="text-xs text-blue-200">From all transactions</p>
+                  <p className="text-xs text-orange-200">From all transactions</p>
                 </CardContent>
               </Card>
 
@@ -331,7 +331,7 @@ const Admin = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
-                    <Users className="h-5 w-5 text-blue-600" />
+                    <Users className="h-5 w-5 text-theme-primary" />
                     <span>Top Buyers</span>
                   </CardTitle>
                   <CardDescription>Highest spending customers</CardDescription>
@@ -349,7 +349,7 @@ const Admin = () => {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-blue-600">₱{buyer.total.toFixed(2)}</p>
+                        <p className="font-bold text-theme-primary">₱{buyer.total.toFixed(2)}</p>
                       </div>
                     </div>
                   ))}

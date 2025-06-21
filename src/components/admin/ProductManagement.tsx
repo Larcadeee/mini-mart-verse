@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, Eye } from "lucide-react";
+import { Plus, Edit, Trash2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -29,6 +29,7 @@ const ProductManagement = () => {
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -45,12 +46,18 @@ const ProductManagement = () => {
 
   const fetchProducts = async () => {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('Fetched products:', data);
       setProducts(data || []);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -60,41 +67,91 @@ const ProductManagement = () => {
     }
   };
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingImage(true);
+      
+      // Create a unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      
+      // Upload file to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(fileName, file);
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
+
+      // Get the public URL
+      const { data } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(fileName);
+
+      setFormData({ ...formData, image_url: data.publicUrl });
+      toast.success('Image uploaded successfully!');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast.error('Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
       const productData = {
-        name: formData.name,
-        description: formData.description,
+        name: formData.name.trim(),
+        description: formData.description.trim(),
         price: parseFloat(formData.price),
-        image_url: formData.image_url,
+        image_url: formData.image_url.trim(),
         category: formData.category,
         stock: parseInt(formData.stock),
         is_featured: formData.is_featured
       };
 
+      // Validate required fields
+      if (!productData.name || !productData.category || productData.price <= 0 || productData.stock < 0) {
+        toast.error('Please fill in all required fields with valid values');
+        return;
+      }
+
       if (editingProduct) {
+        console.log('Updating product:', editingProduct.id, productData);
         const { error } = await supabase
           .from('products')
           .update(productData)
           .eq('id', editingProduct.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Update error:', error);
+          throw error;
+        }
         toast.success('Product updated successfully');
       } else {
+        console.log('Creating product:', productData);
         const { error } = await supabase
           .from('products')
           .insert([productData]);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
         toast.success('Product created successfully');
       }
 
       setIsDialogOpen(false);
       setEditingProduct(null);
       resetForm();
-      fetchProducts();
+      await fetchProducts();
     } catch (error) {
       console.error('Error saving product:', error);
       toast.error('Failed to save product');
@@ -102,6 +159,7 @@ const ProductManagement = () => {
   };
 
   const handleEdit = (product: Product) => {
+    console.log('Editing product:', product);
     setEditingProduct(product);
     setFormData({
       name: product.name,
@@ -119,14 +177,19 @@ const ProductManagement = () => {
     if (!confirm('Are you sure you want to delete this product?')) return;
 
     try {
+      console.log('Deleting product:', productId);
       const { error } = await supabase
         .from('products')
         .delete()
         .eq('id', productId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
+      
       toast.success('Product deleted successfully');
-      fetchProducts();
+      await fetchProducts();
     } catch (error) {
       console.error('Error deleting product:', error);
       toast.error('Failed to delete product');
@@ -161,12 +224,12 @@ const ProductManagement = () => {
         <h2 className="text-2xl font-bold">Product Management</h2>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={openAddDialog} className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600">
+            <Button onClick={openAddDialog} className="bg-theme-primary hover:bg-theme-primary/90">
               <Plus className="h-4 w-4 mr-2" />
               Add Product
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingProduct ? 'Edit Product' : 'Add New Product'}</DialogTitle>
               <DialogDescription>
@@ -175,7 +238,7 @@ const ProductManagement = () => {
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="name">Product Name</Label>
+                <Label htmlFor="name">Product Name *</Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -194,21 +257,23 @@ const ProductManagement = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="price">Price (₱)</Label>
+                  <Label htmlFor="price">Price (₱) *</Label>
                   <Input
                     id="price"
                     type="number"
                     step="0.01"
+                    min="0"
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="stock">Stock</Label>
+                  <Label htmlFor="stock">Stock *</Label>
                   <Input
                     id="stock"
                     type="number"
+                    min="0"
                     value={formData.stock}
                     onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
                     required
@@ -216,7 +281,7 @@ const ProductManagement = () => {
                 </div>
               </div>
               <div>
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category">Category *</Label>
                 <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
@@ -230,7 +295,23 @@ const ProductManagement = () => {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="image_url">Image URL</Label>
+                <Label htmlFor="image_upload">Upload Image</Label>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    id="image_upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploadingImage}
+                  />
+                  <Button type="button" disabled={uploadingImage} size="sm" variant="outline">
+                    <Upload className="h-4 w-4" />
+                  </Button>
+                </div>
+                {uploadingImage && <p className="text-sm text-gray-500">Uploading...</p>}
+              </div>
+              <div>
+                <Label htmlFor="image_url">Or Image URL</Label>
                 <Input
                   id="image_url"
                   type="url"
@@ -238,6 +319,9 @@ const ProductManagement = () => {
                   onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
                   placeholder="https://example.com/image.jpg"
                 />
+                {formData.image_url && (
+                  <img src={formData.image_url} alt="Preview" className="mt-2 w-20 h-20 object-cover rounded" />
+                )}
               </div>
               <div className="flex items-center space-x-2">
                 <input
@@ -252,7 +336,7 @@ const ProductManagement = () => {
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit">
+                <Button type="submit" className="bg-theme-primary hover:bg-theme-primary/90">
                   {editingProduct ? 'Update Product' : 'Add Product'}
                 </Button>
               </DialogFooter>
