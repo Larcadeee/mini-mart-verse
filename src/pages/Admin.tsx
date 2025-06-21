@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut, ShoppingCart } from "lucide-react";
 
 const Admin = () => {
-  const { adminUser, loading, logout } = useAdminAuth();
+  const { adminUser, loading, logout, login } = useAdminAuth();
 
   if (loading) {
     return (
@@ -23,7 +22,7 @@ const Admin = () => {
   }
 
   if (!adminUser) {
-    return <AdminAuth />;
+    return <AdminAuth onAuthSuccess={login} />;
   }
 
   return (
