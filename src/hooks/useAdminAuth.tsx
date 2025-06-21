@@ -16,7 +16,12 @@ export const useAdminAuth = () => {
   useEffect(() => {
     const storedUser = localStorage.getItem('admin_user');
     if (storedUser) {
-      setAdminUser(JSON.parse(storedUser));
+      try {
+        setAdminUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Error parsing stored admin user:', error);
+        localStorage.removeItem('admin_user');
+      }
     }
     setLoading(false);
   }, []);
@@ -28,6 +33,7 @@ export const useAdminAuth = () => {
 
   const login = (user: AdminUser) => {
     setAdminUser(user);
+    localStorage.setItem('admin_user', JSON.stringify(user));
   };
 
   return { adminUser, loading, logout, login };

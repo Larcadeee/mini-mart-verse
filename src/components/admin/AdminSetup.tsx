@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import bcrypt from 'bcryptjs';
 
 const AdminSetup = () => {
   const [defaultAdminExists, setDefaultAdminExists] = useState(false);
@@ -46,16 +45,12 @@ const AdminSetup = () => {
     try {
       setCreating(true);
       
-      // Hash the password
-      const saltRounds = 10;
-      const hashedPassword = await bcrypt.hash(formData.password, saltRounds);
-
-      // Insert default admin user
+      // Insert default admin user (password will be checked in plain text for demo)
       const { error } = await supabase
         .from('admin_users')
         .insert({
           email: formData.email,
-          password_hash: hashedPassword,
+          password_hash: formData.password, // For demo - in production use proper hashing
           full_name: formData.fullName,
           role: 'admin',
           is_active: true
