@@ -8,8 +8,16 @@ import { Lock, User, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+interface AdminUser {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  is_active: boolean;
+}
+
 interface AdminAuthProps {
-  onAuthSuccess: () => void;
+  onAuthSuccess: (user: AdminUser) => void;
 }
 
 const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
@@ -41,7 +49,7 @@ const AdminAuth = ({ onAuthSuccess }: AdminAuthProps) => {
       if (password === 'admin123') {
         localStorage.setItem('admin_user', JSON.stringify(adminUser));
         toast.success('Admin login successful');
-        onAuthSuccess();
+        onAuthSuccess(adminUser);
       } else {
         toast.error('Invalid password');
       }
