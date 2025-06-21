@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -39,96 +38,104 @@ const Index = () => {
 
   useEffect(() => {
     fetchProducts();
+  }, []); // <-- Only runs once on mount
+
+  useEffect(() => {
     if (user) {
       fetchCartItems();
       fetchUserProfile();
     }
-  }, [user]);
+  }, [user]); // <-- Only runs when user changes
 
   const fetchUserProfile = async () => {
     if (!user) return;
-    
+
     try {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('full_name, role')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("full_name, role")
+        .eq("id", user.id)
         .single();
 
       if (error) {
-        console.error('Error fetching user profile:', error);
+        console.error("Error fetching user profile:", error);
         return;
       }
 
       setUserProfile(data);
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.error("Error fetching user profile:", error);
     }
   };
 
   const fetchProducts = async () => {
+    console.log("fetchProducts called");
     try {
       const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      console.log("Supabase response:", data, error);
 
       if (error) throw error;
       setProducts(data || []);
     } catch (error) {
-      console.error('Error fetching products:', error);
-      toast.error('Failed to load products');
+      console.error("Error fetching products:", error);
+      toast.error("Failed to load products");
     } finally {
+      console.log("Setting loading to false");
       setLoading(false);
     }
   };
 
   const fetchCartItems = async () => {
     if (!user) return;
-    
+
     try {
       const { data, error } = await supabase
-        .from('cart_items')
-        .select('product_id')
-        .eq('user_id', user.id);
+        .from("cart_items")
+        .select("product_id")
+        .eq("user_id", user.id);
 
       if (error) throw error;
-      setCartItems(data?.map(item => item.product_id) || []);
+      setCartItems(data?.map((item) => item.product_id) || []);
     } catch (error) {
-      console.error('Error fetching cart items:', error);
+      console.error("Error fetching cart items:", error);
     }
   };
 
   const addToCart = async (productId: string) => {
     if (!user) {
-      navigate('/auth');
+      navigate("/auth");
       return;
     }
 
     try {
-      const { error } = await supabase
-        .from('cart_items')
-        .upsert({
+      const { error } = await supabase.from("cart_items").upsert(
+        {
           user_id: user.id,
           product_id: productId,
-          quantity: 1
-        }, {
-          onConflict: 'user_id,product_id'
-        });
+          quantity: 1,
+        },
+        {
+          onConflict: "user_id,product_id",
+        }
+      );
 
       if (error) throw error;
-      
+
       setCartItems([...cartItems, productId]);
-      toast.success('Item added to cart!');
+      toast.success("Item added to cart!");
     } catch (error) {
-      console.error('Error adding to cart:', error);
-      toast.error('Failed to add item to cart');
+      console.error("Error adding to cart:", error);
+      toast.error("Failed to add item to cart");
     }
   };
 
   const toggleWishlist = (productId: string) => {
     if (wishlist.includes(productId)) {
-      setWishlist(wishlist.filter(id => id !== productId));
+      setWishlist(wishlist.filter((id) => id !== productId));
     } else {
       setWishlist([...wishlist, productId]);
     }
@@ -136,19 +143,22 @@ const Index = () => {
 
   const handleSignOut = async () => {
     await signOut();
-    toast.success('Signed out successfully');
+    toast.success("Signed out successfully");
   };
 
   const handleShopNow = () => {
-    const featuredSection = document.getElementById('featured-products');
+    const featuredSection = document.getElementById("featured-products");
     if (featuredSection) {
-      featuredSection.scrollIntoView({ behavior: 'smooth' });
+      featuredSection.scrollIntoView({ behavior: "smooth" });
     }
   };
 
   if (loading) {
+    console.log("Loading...");
     return <LoadingSkeleton />;
   }
+
+  console.log("Rendering main content");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50">
@@ -161,10 +171,7 @@ const Index = () => {
         onSignOut={handleSignOut}
       />
 
-      <HeroSection
-        user={user}
-        onShopNow={handleShopNow}
-      />
+      <HeroSection user={user} onShopNow={handleShopNow} />
 
       <ProductGrid
         products={products}
