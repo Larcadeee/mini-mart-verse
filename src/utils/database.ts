@@ -7,6 +7,9 @@ export interface DatabaseStatus {
   latency?: number;
 }
 
+// Define the valid table names based on the database schema
+type TableName = "admin_users" | "buyers" | "cart_items" | "products" | "dashboard_metrics" | "profiles" | "transactions";
+
 export const checkDatabaseConnection = async (): Promise<DatabaseStatus> => {
   const startTime = Date.now();
   
@@ -47,7 +50,7 @@ export const checkDatabaseConnection = async (): Promise<DatabaseStatus> => {
   }
 };
 
-export const testTableAccess = async (tableName: string): Promise<boolean> => {
+export const testTableAccess = async (tableName: TableName): Promise<boolean> => {
   try {
     const { error } = await supabase
       .from(tableName)
