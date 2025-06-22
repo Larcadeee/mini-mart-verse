@@ -22,8 +22,8 @@ export const useAuth = () => {
           console.log('Token refreshed successfully');
         }
         
-        if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESH_FAILED') {
-          console.log('Auth session ended or token refresh failed');
+        if (event === 'SIGNED_OUT') {
+          console.log('Auth session ended');
           setSession(null);
           setUser(null);
           setLoading(false);
@@ -51,7 +51,6 @@ export const useAuth = () => {
         
         if (error) {
           console.error('Error getting session:', error);
-          // If there's an error getting the session, clear everything
           setSession(null);
           setUser(null);
         } else {

@@ -25,24 +25,28 @@ const AdminAuth = ({ onLogin }: AdminAuthProps) => {
     try {
       console.log('Admin login attempt for:', formData.email);
       
-      // Query admin_users table
-      const { data: adminUser, error } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('email', formData.email)
-        .eq('password_hash', formData.password) // For demo - in production use proper hashing
-        .eq('is_active', true)
-        .single();
-
-      if (error || !adminUser) {
-        console.error('Admin login error:', error);
-        toast.error('Invalid email or password');
+      // Only allow specific email
+      if (formData.email !== 'gerardherrera@gmail.com') {
+        toast.error('Access denied. Only authorized administrators can login.');
         return;
       }
 
-      console.log('Admin login successful:', adminUser);
-      toast.success('Login successful!');
-      onLogin(adminUser);
+      // For the authorized admin, create a simple auth object
+      if (formData.email === 'gerardherrera@gmail.com' && formData.password === 'admin123') {
+        const adminUser = {
+          id: 'admin-001',
+          email: 'gerardherrera@gmail.com',
+          full_name: 'Gerard Herrera',
+          role: 'admin',
+          is_active: true
+        };
+
+        console.log('Admin login successful:', adminUser);
+        toast.success('Login successful!');
+        onLogin(adminUser);
+      } else {
+        toast.error('Invalid email or password');
+      }
     } catch (error) {
       console.error('Admin login error:', error);
       toast.error('Login failed. Please try again.');
@@ -68,7 +72,7 @@ const AdminAuth = ({ onLogin }: AdminAuthProps) => {
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="admin@minimart.com"
+              placeholder="gerardherrera@gmail.com"
               required
             />
           </div>
@@ -93,8 +97,8 @@ const AdminAuth = ({ onLogin }: AdminAuthProps) => {
         </form>
         
         <div className="mt-4 p-3 bg-gray-50 rounded text-sm text-gray-600">
-          <p>Default credentials:</p>
-          <p>Email: admin@minimart.com</p>
+          <p>Authorized admin only:</p>
+          <p>Email: gerardherrera@gmail.com</p>
           <p>Password: admin123</p>
         </div>
       </CardContent>

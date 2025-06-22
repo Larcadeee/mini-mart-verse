@@ -170,7 +170,7 @@ const Index = () => {
 
   console.log('Rendering main content...');
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
+    <div className="min-h-screen bg-white">
       <Header
         user={user}
         userProfile={userProfile}
@@ -186,7 +186,7 @@ const Index = () => {
 
       {/* Featured Snacks Section */}
       {featuredProducts.length > 0 && (
-        <section className="py-16 px-4" id="featured-products">
+        <section className="py-16 px-4 bg-gradient-to-br from-orange-50 to-red-50" id="featured-products">
           <div className="container mx-auto">
             <div className="text-center mb-12">
               <h3 className="text-3xl font-bold text-theme-primary mb-4">Featured Snacks</h3>
@@ -207,7 +207,7 @@ const Index = () => {
       )}
 
       {/* All Snacks Section */}
-      <section className="py-16 px-4" id="products-section">
+      <section className="py-16 px-4 bg-gray-50" id="products-section">
         <div className="container mx-auto">
           <div className="text-center mb-12">
             <h3 className="text-3xl font-bold text-theme-primary mb-4">All Snacks</h3>

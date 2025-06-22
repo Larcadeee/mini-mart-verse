@@ -8,130 +8,140 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const AdminSetup = () => {
-  const [defaultAdminExists, setDefaultAdminExists] = useState(false);
+  const [sampleDataExists, setSampleDataExists] = useState(false);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [formData, setFormData] = useState({
-    email: 'admin@minimart.com',
-    password: 'admin123',
-    fullName: 'Default Admin'
-  });
 
   useEffect(() => {
-    checkDefaultAdmin();
+    checkSampleData();
   }, []);
 
-  const checkDefaultAdmin = async () => {
+  const checkSampleData = async () => {
     try {
       const { data, error } = await supabase
-        .from('admin_users')
+        .from('products')
         .select('id')
-        .eq('email', 'admin@minimart.com')
-        .single();
+        .limit(1);
 
-      if (error && error.code !== 'PGRST116') {
-        throw error;
+      if (error) {
+        console.error('Error checking sample data:', error);
       }
 
-      setDefaultAdminExists(!!data);
+      setSampleDataExists((data?.length || 0) > 0);
     } catch (error) {
-      console.error('Error checking default admin:', error);
+      console.error('Error checking sample data:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const createDefaultAdmin = async () => {
+  const createSampleData = async () => {
     try {
       setCreating(true);
       
-      // Insert default admin user (password will be checked in plain text for demo)
+      const sampleProducts = [
+        {
+          name: "Chicharon",
+          description: "Crispy pork skin snack, a Filipino favorite",
+          price: 25.00,
+          category: "Chips",
+          stock: 50,
+          is_featured: true,
+          image_url: "https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=400"
+        },
+        {
+          name: "Banana Chips",
+          description: "Sweet and crispy banana chips",
+          price: 15.00,
+          category: "Chips",
+          stock: 75,
+          is_featured: true,
+          image_url: "https://images.unsplash.com/photo-1587132161949-b47d2ad79de8?w=400"
+        },
+        {
+          name: "Polvoron",
+          description: "Traditional Filipino shortbread confection",
+          price: 35.00,
+          category: "Sweets",
+          stock: 30,
+          is_featured: false,
+          image_url: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400"
+        },
+        {
+          name: "Dried Mangoes",
+          description: "Sweet dried Philippine mangoes",
+          price: 45.00,
+          category: "Dried Fruits",
+          stock: 40,
+          is_featured: true,
+          image_url: "https://images.unsplash.com/photo-1605027990121-cbae9fc09d5a?w=400"
+        }
+      ];
+
       const { error } = await supabase
-        .from('admin_users')
-        .insert({
-          email: formData.email,
-          password_hash: formData.password, // For demo - in production use proper hashing
-          full_name: formData.fullName,
-          role: 'admin',
-          is_active: true
-        });
+        .from('products')
+        .insert(sampleProducts);
 
       if (error) {
         throw error;
       }
 
-      toast.success('Default admin user created successfully!');
-      setDefaultAdminExists(true);
+      toast.success('Sample products created successfully!');
+      setSampleDataExists(true);
     } catch (error) {
-      console.error('Error creating default admin:', error);
-      toast.error('Failed to create default admin user');
+      console.error('Error creating sample data:', error);
+      toast.error('Failed to create sample products');
     } finally {
       setCreating(false);
     }
   };
 
   if (loading) {
-    return <div>Checking admin setup...</div>;
+    return <div>Checking system setup...</div>;
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Admin Setup</CardTitle>
+        <CardTitle>System Setup</CardTitle>
         <CardDescription>
-          {defaultAdminExists 
-            ? 'Default admin user is configured' 
-            : 'Create a default admin user to get started'
-          }
+          Admin access is restricted to authorized users only (gerardherrera@gmail.com)
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {defaultAdminExists ? (
-          <div className="space-y-4">
+        <div className="space-y-4">
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded">
+            <p className="text-blue-800">✓ Admin access configured</p>
+            <p className="text-sm text-blue-600 mt-1">
+              Only gerardherrera@gmail.com can access admin functions
+            </p>
+          </div>
+
+          {sampleDataExists ? (
             <div className="p-4 bg-green-50 border border-green-200 rounded">
-              <p className="text-green-800">✓ Default admin user exists</p>
+              <p className="text-green-800">✓ Sample products available</p>
               <p className="text-sm text-green-600 mt-1">
-                You can log in with: admin@minimart.com
+                Products are loaded and ready for display
               </p>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
+          ) : (
+            <div className="space-y-4">
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
+                <p className="text-yellow-800">⚠ No products found</p>
+                <p className="text-sm text-yellow-600 mt-1">
+                  Create sample products to populate the store
+                </p>
+              </div>
+              <Button 
+                onClick={createSampleData} 
+                disabled={creating}
+                className="bg-theme-primary hover:bg-theme-primary/90"
+              >
+                {creating ? 'Creating Sample Products...' : 'Create Sample Products'}
+              </Button>
             </div>
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input
-                id="fullName"
-                value={formData.fullName}
-                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-              />
-            </div>
-            <Button 
-              onClick={createDefaultAdmin} 
-              disabled={creating}
-              className="bg-theme-primary hover:bg-theme-primary/90"
-            >
-              {creating ? 'Creating...' : 'Create Default Admin'}
-            </Button>
-          </div>
-        )}
+          )}
+        </div>
       </CardContent>
     </Card>
   );
