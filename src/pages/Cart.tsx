@@ -19,7 +19,7 @@ interface CartItem {
     price: number;
     image_url: string;
     category: string;
-  };
+  } | null;
 }
 
 const Cart = () => {
@@ -31,6 +31,7 @@ const Cart = () => {
   useEffect(() => {
     if (!loading && !user) {
       navigate('/auth');
+      return;
     }
   }, [user, loading, navigate]);
 
@@ -65,11 +66,22 @@ const Cart = () => {
         throw error;
       }
 
-      console.log('Cart items fetched successfully:', data);
-      setCartItems(data || []);
+      console.log('Raw cart items data:', data);
+      
+      // Filter out items where products is null and log them
+      const validItems = data?.filter(item => {
+        if (!item.products) {
+          console.warn('Cart item with null product found:', item);
+          return false;
+        }
+        return true;
+      }) || [];
+
+      console.log('Valid cart items:', validItems);
+      setCartItems(validItems);
     } catch (error) {
       console.error('Database connection error in cart:', error);
-      toast.error('Failed to load cart items. Please check your connection.');
+      toast.error('Failed to load cart items. Please try refreshing the page.');
     } finally {
       setCartLoading(false);
     }
@@ -125,7 +137,11 @@ const Cart = () => {
   };
 
   const getTotalPrice = () => {
-    return cartItems.reduce((total, item) => total + (item.products.price * item.quantity), 0);
+    return cartItems.reduce((total, item) => {
+      // Safety check for products
+      if (!item.products) return total;
+      return total + (item.products.price * item.quantity);
+    }, 0);
   };
 
   const getTotalItems = () => {
@@ -136,6 +152,17 @@ const Cart = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 flex items-center justify-center">
         <div className="text-lg">Loading cart...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg mb-4">Please sign in to view your cart</p>
+          <Button onClick={() => navigate('/auth')}>Sign In</Button>
+        </div>
       </div>
     );
   }
@@ -180,7 +207,7 @@ const Cart = () => {
               <h2 className="text-2xl font-bold text-gray-600 mb-2">Your cart is empty</h2>
               <p className="text-gray-500 mb-6">Add some delicious Filipino snacks to get started!</p>
               <Button
-                onClick={() => navigate('/buyers')}
+                onClick={() => navigate('/')}
                 className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
               >
                 Start Shopping
@@ -191,58 +218,70 @@ const Cart = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
-              {cartItems.map((item) => (
-                <Card key={item.id} className="p-4">
-                  <div className="flex items-center space-x-4">
-                    <img
-                      src={item.products.image_url || ''}
-                      alt={item.products.name}
-                      className="w-20 h-20 object-cover rounded-lg"
-                    />
-                    
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg">{item.products.name}</h3>
-                      <Badge variant="secondary" className="mb-2">
-                        {item.products.category}
-                      </Badge>
-                      <p className="text-xl font-bold text-blue-600">
-                        ₱{item.products.price.toFixed(2)}
-                      </p>
-                    </div>
+              {cartItems.map((item) => {
+                // Safety check for products - skip rendering if null
+                if (!item.products) {
+                  console.warn('Skipping cart item with null product:', item);
+                  return null;
+                }
 
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
+                return (
+                  <Card key={item.id} className="p-4">
+                    <div className="flex items-center space-x-4">
+                      <img
+                        src={item.products.image_url || '/placeholder.svg'}
+                        alt={item.products.name}
+                        className="w-20 h-20 object-cover rounded-lg"
+                        onError={(e) => {
+                          console.log('Image failed to load:', item.products?.image_url);
+                          e.currentTarget.src = '/placeholder.svg';
+                        }}
+                      />
                       
-                      <span className="w-12 text-center font-semibold">
-                        {item.quantity}
-                      </span>
-                      
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      >
-                        <Plus className="h-4 w-4" />
-                      </Button>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg">{item.products.name}</h3>
+                        <Badge variant="secondary" className="mb-2">
+                          {item.products.category}
+                        </Badge>
+                        <p className="text-xl font-bold text-blue-600">
+                          ₱{item.products.price.toFixed(2)}
+                        </p>
+                      </div>
 
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => removeItem(item.id)}
-                        className="ml-4"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        
+                        <span className="w-12 text-center font-semibold">
+                          {item.quantity}
+                        </span>
+                        
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => removeItem(item.id)}
+                          className="ml-4"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                );
+              })}
             </div>
 
             {/* Order Summary */}
@@ -274,7 +313,7 @@ const Cart = () => {
                     onClick={() => toast.success('Checkout functionality coming soon!')}
                   >
                     Proceed to Checkout
-                  </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>
