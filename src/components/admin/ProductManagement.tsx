@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,16 +39,16 @@ const ProductManagement = () => {
     is_featured: false
   });
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
+  // Optimized fetch function with error handling and performance improvements
+  const fetchProducts = useCallback(async () => {
     try {
+      console.log('Fetching products...');
       setLoading(true);
+      
+      // Use select with specific columns for better performance
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select('id, name, description, price, image_url, category, stock, is_featured, created_at')
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -57,15 +56,19 @@ const ProductManagement = () => {
         throw error;
       }
       
-      console.log('Fetched products:', data);
+      console.log('Fetched products successfully:', data?.length || 0, 'products');
       setProducts(data || []);
     } catch (error) {
       console.error('Error fetching products:', error);
-      toast.error('Failed to load products');
+      toast.error('Failed to load products. Please check your connection.');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -215,13 +218,21 @@ const ProductManagement = () => {
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center h-64">Loading products...</div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2">Loading products...</span>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Product Management</h2>
+        <div>
+          <h2 className="text-2xl font-bold">Product Management</h2>
+          <p className="text-sm text-gray-600">{products.length} products total</p>
+        </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={openAddDialog} className="bg-theme-primary hover:bg-theme-primary/90">
@@ -351,58 +362,64 @@ const ProductManagement = () => {
           <CardDescription>Manage your product inventory</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Stock</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {products.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell>
-                    <div className="flex items-center space-x-3">
-                      {product.image_url && (
-                        <img src={product.image_url} alt={product.name} className="w-10 h-10 rounded object-cover" />
-                      )}
-                      <div>
-                        <div className="font-medium">{product.name}</div>
-                        <div className="text-sm text-gray-500">{product.description?.substring(0, 50)}...</div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{product.category}</TableCell>
-                  <TableCell>₱{product.price.toFixed(2)}</TableCell>
-                  <TableCell>{product.stock}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-col space-y-1">
-                      <Badge variant={product.stock > 0 ? "default" : "destructive"}>
-                        {product.stock > 0 ? "In Stock" : "Out of Stock"}
-                      </Badge>
-                      {product.is_featured && (
-                        <Badge variant="secondary">Featured</Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button size="sm" variant="outline" onClick={() => handleEdit(product)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => handleDelete(product.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+          {products.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <p>No products found. Add your first product to get started!</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Stock</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {products.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell>
+                      <div className="flex items-center space-x-3">
+                        {product.image_url && (
+                          <img src={product.image_url} alt={product.name} className="w-10 h-10 rounded object-cover" />
+                        )}
+                        <div>
+                          <div className="font-medium">{product.name}</div>
+                          <div className="text-sm text-gray-500">{product.description?.substring(0, 50)}...</div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{product.category}</TableCell>
+                    <TableCell>₱{product.price.toFixed(2)}</TableCell>
+                    <TableCell>{product.stock}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col space-y-1">
+                        <Badge variant={product.stock > 0 ? "default" : "destructive"}>
+                          {product.stock > 0 ? "In Stock" : "Out of Stock"}
+                        </Badge>
+                        {product.is_featured && (
+                          <Badge variant="secondary">Featured</Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(product)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleDelete(product.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
