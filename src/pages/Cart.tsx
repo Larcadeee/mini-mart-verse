@@ -41,7 +41,11 @@ const Cart = () => {
   }, [user]);
 
   const fetchCartItems = async () => {
+    if (!user) return;
+    
     try {
+      console.log('Fetching cart items for user:', user.id);
+      
       const { data, error } = await supabase
         .from('cart_items')
         .select(`
@@ -54,13 +58,18 @@ const Cart = () => {
             category
           )
         `)
-        .eq('user_id', user?.id);
+        .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching cart items:', error);
+        throw error;
+      }
+
+      console.log('Cart items fetched successfully:', data);
       setCartItems(data || []);
     } catch (error) {
-      console.error('Error fetching cart items:', error);
-      toast.error('Failed to load cart items');
+      console.error('Database connection error in cart:', error);
+      toast.error('Failed to load cart items. Please check your connection.');
     } finally {
       setCartLoading(false);
     }
@@ -78,13 +87,17 @@ const Cart = () => {
         .update({ quantity: newQuantity })
         .eq('id', itemId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating quantity:', error);
+        throw error;
+      }
       
       setCartItems(prev => 
         prev.map(item => 
           item.id === itemId ? { ...item, quantity: newQuantity } : item
         )
       );
+      toast.success('Quantity updated');
     } catch (error) {
       console.error('Error updating quantity:', error);
       toast.error('Failed to update quantity');
@@ -98,7 +111,10 @@ const Cart = () => {
         .delete()
         .eq('id', itemId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error removing item:', error);
+        throw error;
+      }
       
       setCartItems(prev => prev.filter(item => item.id !== itemId));
       toast.success('Item removed from cart');
@@ -133,11 +149,11 @@ const Cart = () => {
             <div className="flex items-center space-x-4">
               <Button
                 variant="outline"
-                onClick={() => navigate('/')}
+                onClick={() => navigate(-1)}
                 className="flex items-center space-x-2"
               >
                 <ArrowLeft className="h-4 w-4" />
-                <span>Back to Shop</span>
+                <span>Back</span>
               </Button>
               
               <div className="flex items-center space-x-2">
@@ -164,7 +180,7 @@ const Cart = () => {
               <h2 className="text-2xl font-bold text-gray-600 mb-2">Your cart is empty</h2>
               <p className="text-gray-500 mb-6">Add some delicious Filipino snacks to get started!</p>
               <Button
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/buyers')}
                 className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
               >
                 Start Shopping

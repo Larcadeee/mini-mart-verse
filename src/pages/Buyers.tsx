@@ -5,10 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
-import HeroSection from "@/components/landing/HeroSection";
 import ProductGrid from "@/components/landing/ProductGrid";
-import VideoPlayer from "@/components/landing/VideoPlayer";
-import FeaturesSection from "@/components/landing/FeaturesSection";
 import Footer from "@/components/layout/Footer";
 import LoadingSkeleton from "@/components/ui/LoadingSkeleton";
 
@@ -28,7 +25,7 @@ interface UserProfile {
   role: string;
 }
 
-const Index = () => {
+const Buyers = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
@@ -92,15 +89,22 @@ const Index = () => {
     if (!user) return;
     
     try {
+      console.log('Fetching cart items for user:', user.id);
       const { data, error } = await supabase
         .from('cart_items')
         .select('product_id')
         .eq('user_id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching cart items:', error);
+        throw error;
+      }
+      
+      console.log('Cart items fetched:', data);
       setCartItems(data?.map(item => item.product_id) || []);
     } catch (error) {
       console.error('Error fetching cart items:', error);
+      toast.error('Failed to load cart items');
     }
   };
 
@@ -112,6 +116,8 @@ const Index = () => {
     }
 
     try {
+      console.log('Adding to cart - User:', user.id, 'Product:', productId);
+      
       // Check if item already exists in cart
       const { data: existingItem, error: checkError } = await supabase
         .from('cart_items')
@@ -120,7 +126,10 @@ const Index = () => {
         .eq('product_id', productId)
         .maybeSingle();
 
-      if (checkError) throw checkError;
+      if (checkError) {
+        console.error('Error checking existing cart item:', checkError);
+        throw checkError;
+      }
 
       if (existingItem) {
         // Update quantity if item exists
@@ -141,7 +150,10 @@ const Index = () => {
             quantity: 1
           });
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Error inserting cart item:', insertError);
+          throw insertError;
+        }
         
         setCartItems([...cartItems, productId]);
         toast.success('Item added to cart!');
@@ -164,14 +176,8 @@ const Index = () => {
 
   const handleSignOut = async () => {
     await signOut();
+    navigate('/');
     toast.success('Signed out successfully');
-  };
-
-  const handleShopNow = () => {
-    const productsSection = document.getElementById('featured-products');
-    if (productsSection) {
-      productsSection.scrollIntoView({ behavior: 'smooth' });
-    }
   };
 
   if (loading) {
@@ -189,20 +195,20 @@ const Index = () => {
         onSignOut={handleSignOut}
       />
 
-      <HeroSection
-        user={user}
-        onShopNow={handleShopNow}
-      />
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-theme-primary mb-4">
+            Browse Our Snacks
+          </h1>
+          <p className="text-xl text-gray-600">Discover delicious Filipino treats</p>
+        </div>
 
-      <VideoPlayer />
-
-      {/* Featured Snacks Section */}
-      {featuredProducts.length > 0 && (
-        <section className="py-16 px-4" id="featured-products">
-          <div className="container mx-auto">
-            <div className="text-center mb-12">
-              <h3 className="text-3xl font-bold text-theme-primary mb-4">Featured Snacks</h3>
-              <p className="text-xl text-gray-600">Our handpicked favorites</p>
+        {/* Featured Snacks Section */}
+        {featuredProducts.length > 0 && (
+          <section className="mb-16">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-theme-primary mb-4">Featured Snacks</h2>
+              <p className="text-lg text-gray-600">Our handpicked favorites just for you</p>
             </div>
             <div className="bg-white rounded-lg shadow-lg p-6">
               <ProductGrid
@@ -214,16 +220,14 @@ const Index = () => {
                 onToggleWishlist={toggleWishlist}
               />
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        )}
 
-      {/* All Snacks Section */}
-      <section className="py-16 px-4" id="products-section">
-        <div className="container mx-auto">
-          <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-theme-primary mb-4">All Snacks</h3>
-            <p className="text-xl text-gray-600">Browse our complete collection</p>
+        {/* All Products Section */}
+        <section>
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-theme-primary mb-4">All Products</h2>
+            <p className="text-lg text-gray-600">Browse our complete collection</p>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
             <ProductGrid
@@ -235,14 +239,12 @@ const Index = () => {
               onToggleWishlist={toggleWishlist}
             />
           </div>
-        </div>
-      </section>
-
-      <FeaturesSection />
+        </section>
+      </div>
 
       <Footer />
     </div>
   );
 };
 
-export default Index;
+export default Buyers;
