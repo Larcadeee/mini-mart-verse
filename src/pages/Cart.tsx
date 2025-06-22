@@ -313,7 +313,7 @@ const Cart = () => {
                     onClick={() => toast.success('Checkout functionality coming soon!')}
                   >
                     Proceed to Checkout
-                  </div>
+                  </Button>
                 </CardContent>
               </Card>
             </div>
