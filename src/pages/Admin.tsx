@@ -4,7 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { useNavigate } from "react-router-dom";
 import AdminAuth from "@/components/admin/AdminAuth";
+import AdminHeader from "@/components/admin/AdminHeader";
 import ProductManagement from "@/components/admin/ProductManagement";
 import BuyerManagement from "@/components/admin/BuyerManagement";
 import TransactionManagement from "@/components/admin/TransactionManagement";
@@ -26,8 +28,9 @@ interface TopProduct {
 }
 
 const Admin = () => {
-  console.log('Admin page component rendered');
+  const navigate = useNavigate();
   const { adminUser, loading, login } = useAdminAuth();
+  const [activeTab, setActiveTab] = useState('products');
   const [initializing, setInitializing] = useState(true);
   const [dbConnected, setDbConnected] = useState(false);
   const [checkingDb, setCheckingDb] = useState(true);
@@ -178,6 +181,11 @@ const Admin = () => {
     }
   };
 
+  const handleSignOut = async () => {
+    navigate('/');
+    toast.success('Signed out successfully');
+  };
+
   console.log('Admin render state - loading:', loading, 'initializing:', initializing, 'adminUser:', !!adminUser, 'dbConnected:', dbConnected, 'checkingDb:', checkingDb);
 
   // Show loading during initial checks
@@ -235,16 +243,14 @@ const Admin = () => {
   
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600">Welcome back, {adminUser.full_name}</p>
-          <div className="flex items-center mt-2 text-sm text-green-600">
-            <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-            Database Connected
-          </div>
-        </div>
+      <AdminHeader 
+        adminUser={adminUser}
+        onSignOut={handleSignOut}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
+      <div className="container mx-auto px-4 py-8">
         {/* Metrics Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
@@ -348,7 +354,7 @@ const Admin = () => {
           </Card>
         </div>
 
-        <Tabs defaultValue="products" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="buyers">Buyers</TabsTrigger>

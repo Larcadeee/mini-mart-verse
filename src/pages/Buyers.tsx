@@ -67,19 +67,24 @@ const Buyers = () => {
 
   const fetchProducts = async () => {
     try {
+      console.log('Fetching products for Buyers page...');
       const { data, error } = await supabase
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching products:', error);
+        throw error;
+      }
       
+      console.log('Products fetched successfully:', data?.length || 0, 'products');
       const allProducts = data || [];
       setProducts(allProducts);
       setFeaturedProducts(allProducts.filter(product => product.is_featured));
     } catch (error) {
       console.error('Error fetching products:', error);
-      toast.error('Failed to load products');
+      toast.error('Failed to load products. Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -101,7 +106,9 @@ const Buyers = () => {
       }
       
       console.log('Cart items fetched:', data);
-      setCartItems(data?.map(item => item.product_id) || []);
+      const productIds = data?.map(item => item.product_id) || [];
+      setCartItems(productIds);
+      console.log('Cart items set:', productIds);
     } catch (error) {
       console.error('Error fetching cart items:', error);
       toast.error('Failed to load cart items');
@@ -138,7 +145,10 @@ const Buyers = () => {
           .update({ quantity: existingItem.quantity + 1 })
           .eq('id', existingItem.id);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Error updating cart item:', updateError);
+          throw updateError;
+        }
         toast.success('Item quantity updated in cart!');
       } else {
         // Insert new item
@@ -155,9 +165,13 @@ const Buyers = () => {
           throw insertError;
         }
         
-        setCartItems([...cartItems, productId]);
+        // Update local cart items state
+        setCartItems(prev => [...prev, productId]);
         toast.success('Item added to cart!');
       }
+
+      // Refresh cart items to ensure sync
+      await fetchCartItems();
     } catch (error) {
       console.error('Error adding to cart:', error);
       toast.error('Failed to add item to cart');
@@ -203,7 +217,7 @@ const Buyers = () => {
           <p className="text-xl text-gray-600">Discover delicious Filipino treats</p>
         </div>
 
-        {/* Featured Snacks Section */}
+        {/* Featured Snacks Section - Display 4 Featured Products */}
         {featuredProducts.length > 0 && (
           <section className="mb-16">
             <div className="text-center mb-8">
@@ -212,7 +226,7 @@ const Buyers = () => {
             </div>
             <div className="bg-white rounded-lg shadow-lg p-6">
               <ProductGrid
-                products={featuredProducts}
+                products={featuredProducts.slice(0, 4)}
                 searchQuery=""
                 cartItems={cartItems}
                 wishlist={wishlist}

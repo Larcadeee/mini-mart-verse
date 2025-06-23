@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface AdminAuthProps {
   onLogin: (user: any) => void;
 }
 
 const AdminAuth = ({ onLogin }: AdminAuthProps) => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -42,8 +44,11 @@ const AdminAuth = ({ onLogin }: AdminAuthProps) => {
         };
 
         console.log('Admin login successful:', adminUser);
-        toast.success('Login successful!');
+        toast.success('Login successful! Redirecting to admin dashboard...');
         onLogin(adminUser);
+        
+        // Redirect to admin dashboard
+        navigate('/admin');
       } else {
         toast.error('Invalid email or password');
       }
@@ -89,7 +94,7 @@ const AdminAuth = ({ onLogin }: AdminAuthProps) => {
           </div>
           <Button
             type="submit"
-            className="w-full bg-theme-primary hover:bg-theme-primary/90"
+            className="w-full bg-blue-600 hover:bg-blue-700"
             disabled={loading}
           >
             {loading ? 'Signing in...' : 'Sign In'}
