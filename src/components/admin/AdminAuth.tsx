@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface AdminAuthProps {
@@ -28,6 +27,7 @@ const AdminAuth = ({ onLogin }: AdminAuthProps) => {
       // Only allow specific email
       if (formData.email !== 'gerardherrera@gmail.com') {
         toast.error('Access denied. Only authorized administrators can login.');
+        setLoading(false);
         return;
       }
 
@@ -60,7 +60,7 @@ const AdminAuth = ({ onLogin }: AdminAuthProps) => {
       <CardHeader>
         <CardTitle>Admin Login</CardTitle>
         <CardDescription>
-          Enter your admin credentials to access the dashboard
+          Access restricted to authorized administrators only
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -72,7 +72,7 @@ const AdminAuth = ({ onLogin }: AdminAuthProps) => {
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="gerardherrera@gmail.com"
+              placeholder="Enter your admin email"
               required
             />
           </div>
@@ -96,10 +96,11 @@ const AdminAuth = ({ onLogin }: AdminAuthProps) => {
           </Button>
         </form>
         
-        <div className="mt-4 p-3 bg-gray-50 rounded text-sm text-gray-600">
-          <p>Authorized admin only:</p>
-          <p>Email: gerardherrera@gmail.com</p>
-          <p>Password: admin123</p>
+        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded text-sm">
+          <p className="text-red-800 font-medium">Restricted Access</p>
+          <p className="text-red-600 text-xs mt-1">
+            Only gerardherrera@gmail.com can access admin functions
+          </p>
         </div>
       </CardContent>
     </Card>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -39,15 +40,41 @@ const Index = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
-    fetchProducts();
-    if (user) {
-      fetchCartItems();
-      fetchUserProfile();
-    }
-  }, [user]);
+    const initializeData = async () => {
+      try {
+        setLoading(true);
+        console.log('Starting data initialization...');
+        
+        // Fetch products first (this doesn't require auth)
+        await fetchProducts();
+        
+        // If user is logged in, fetch user-specific data
+        if (user?.id) {
+          console.log('User is logged in, fetching user-specific data for:', user.id);
+          await Promise.all([
+            fetchCartItems(),
+            fetchUserProfile()
+          ]);
+        } else {
+          console.log('No user logged in, skipping user-specific data');
+        }
+      } catch (error) {
+        console.error('Error during initialization:', error);
+        toast.error('Failed to load application data');
+      } finally {
+        setLoading(false);
+        console.log('Data initialization complete');
+      }
+    };
+
+    initializeData();
+  }, [user?.id]);
 
   const fetchUserProfile = async () => {
-    if (!user) return;
+    if (!user?.id) {
+      console.log('No user ID available for profile fetch');
+      return;
+    }
 
     try {
       console.log('Fetching user profile for:', user.id);
@@ -55,30 +82,31 @@ const Index = () => {
         .from('profiles')
         .select('full_name, role')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching user profile:", error);
         return;
       }
 
-      console.log('User profile fetched:', data);
-      setUserProfile(data);
+      if (data) {
+        console.log('User profile fetched:', data);
+        setUserProfile(data);
+      } else {
+        console.log('No profile found for user');
+      }
     } catch (error) {
       console.error("Error fetching user profile:", error);
     }
   };
 
   const fetchProducts = async () => {
-    console.log("fetchProducts called");
     try {
-      console.log('Fetching products...');
+      console.log('Fetching products from database...');
       const { data, error } = await supabase
         .from("products")
         .select("*")
         .order("created_at", { ascending: false });
-
-      console.log("Supabase response:", data, error);
 
       if (error) {
         console.error('Supabase error:', error);
@@ -86,19 +114,26 @@ const Index = () => {
       }
       
       const allProducts = data || [];
-      console.log('Products fetched:', allProducts.length, 'products');
+      console.log('Products fetched successfully:', allProducts.length, 'products');
       setProducts(allProducts);
-      setFeaturedProducts(allProducts.filter(product => product.is_featured));
+      
+      const featured = allProducts.filter(product => product.is_featured);
+      console.log('Featured products:', featured.length);
+      setFeaturedProducts(featured);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast.error('Failed to load products');
-    } finally {
-      setLoading(false);
+      // Set empty arrays as fallback
+      setProducts([]);
+      setFeaturedProducts([]);
     }
   };
 
   const fetchCartItems = async () => {
-    if (!user) return;
+    if (!user?.id) {
+      console.log('No user ID available for cart fetch');
+      return;
+    }
 
     try {
       console.log('Fetching cart items for user:', user.id);
@@ -107,8 +142,14 @@ const Index = () => {
         .select("product_id")
         .eq("user_id", user.id);
 
-      if (error) throw error;
-      setCartItems(data?.map(item => item.product_id) || []);
+      if (error) {
+        console.error('Error fetching cart items:', error);
+        return;
+      }
+
+      const itemIds = data?.map(item => item.product_id) || [];
+      console.log('Cart items fetched:', itemIds.length, 'items');
+      setCartItems(itemIds);
     } catch (error) {
       console.error('Error fetching cart items:', error);
     }
@@ -166,9 +207,6 @@ const Index = () => {
     return <LoadingSkeleton />;
   }
 
-  console.log("Rendering main content");
-
-  console.log('Rendering main content...');
   return (
     <div className="min-h-screen bg-white">
       <Header
