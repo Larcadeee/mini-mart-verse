@@ -222,12 +222,12 @@ const Index = () => {
 
       <VideoPlayer />
 
-      {/* Featured Snacks Section */}
+      {/* Featured Snacks Section - Toned down colors */}
       {featuredProducts.length > 0 && (
-        <section className="py-16 px-4 bg-gradient-to-br from-orange-50 to-red-50" id="featured-products">
+        <section className="py-16 px-4 bg-gradient-to-br from-blue-50 to-indigo-50" id="featured-products">
           <div className="container mx-auto">
             <div className="text-center mb-12">
-              <h3 className="text-3xl font-bold text-theme-primary mb-4">Featured Snacks</h3>
+              <h3 className="text-3xl font-bold text-gray-800 mb-4">Featured Snacks</h3>
               <p className="text-xl text-gray-600">Our handpicked favorites</p>
             </div>
             <div className="bg-white rounded-lg shadow-lg p-6">
@@ -244,12 +244,13 @@ const Index = () => {
         </section>
       )}
 
-      {/* All Snacks Section */}
+      {/* All Snacks Section - Showing ALL products, not just search results */}
       <section className="py-16 px-4 bg-gray-50" id="products-section">
         <div className="container mx-auto">
           <div className="text-center mb-12">
-            <h3 className="text-3xl font-bold text-theme-primary mb-4">All Snacks</h3>
+            <h3 className="text-3xl font-bold text-gray-800 mb-4">All Snacks</h3>
             <p className="text-xl text-gray-600">Browse our complete collection</p>
+            <p className="text-sm text-gray-500 mt-2">Showing {products.length} products</p>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">
             <ProductGrid

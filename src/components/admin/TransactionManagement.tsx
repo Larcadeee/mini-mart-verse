@@ -5,11 +5,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Eye, Edit, CheckCircle, XCircle } from "lucide-react";
+import { Eye, Edit, CheckCircle, XCircle, Trash2, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ExcelExport from "./ExcelExport";
+import TransactionForm from "./TransactionForm";
 
 interface Transaction {
   id: string;
@@ -27,12 +28,12 @@ interface Transaction {
     full_name: string;
     email: string;
     phone: string;
-  };
+  } | null;
   products: {
     name: string;
     category: string;
     image_url: string;
-  };
+  } | null;
 }
 
 const TransactionManagement = () => {
@@ -40,6 +41,8 @@ const TransactionManagement = () => {
   const [loading, setLoading] = useState(true);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
@@ -48,6 +51,7 @@ const TransactionManagement = () => {
 
   const fetchTransactions = async () => {
     try {
+      console.log('Fetching transactions...');
       const { data, error } = await supabase
         .from('transactions')
         .select(`
@@ -65,7 +69,12 @@ const TransactionManagement = () => {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching transactions:', error);
+        throw error;
+      }
+      
+      console.log('Transactions fetched successfully:', data?.length || 0);
       setTransactions(data || []);
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -93,9 +102,44 @@ const TransactionManagement = () => {
     }
   };
 
+  const deleteTransaction = async (transactionId: string) => {
+    if (!confirm('Are you sure you want to delete this transaction?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('id', transactionId);
+
+      if (error) throw error;
+      
+      toast.success('Transaction deleted successfully');
+      fetchTransactions();
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      toast.error('Failed to delete transaction');
+    }
+  };
+
   const viewTransaction = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
     setIsDialogOpen(true);
+  };
+
+  const editTransaction = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setIsFormOpen(true);
+  };
+
+  const addNewTransaction = () => {
+    setEditingTransaction(null);
+    setIsFormOpen(true);
+  };
+
+  const handleTransactionSaved = () => {
+    setIsFormOpen(false);
+    setEditingTransaction(null);
+    fetchTransactions();
   };
 
   const formatDate = (dateString: string) => {
@@ -142,6 +186,10 @@ const TransactionManagement = () => {
               <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
+          <Button onClick={addNewTransaction} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Transaction
+          </Button>
           <ExcelExport />
         </div>
       </div>
@@ -197,7 +245,7 @@ const TransactionManagement = () => {
       <Card>
         <CardHeader>
           <CardTitle>Recent Transactions</CardTitle>
-          <CardDescription>View and manage customer orders</CardDescription>
+          <CardDescription>View and manage customer orders ({filteredTransactions.length} total)</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -217,7 +265,7 @@ const TransactionManagement = () => {
                 <TableRow key={transaction.id}>
                   <TableCell>
                     <div className="flex items-center space-x-3">
-                      {transaction.products.image_url && (
+                      {transaction.products?.image_url && (
                         <img 
                           src={transaction.products.image_url} 
                           alt={transaction.products.name} 
@@ -225,15 +273,15 @@ const TransactionManagement = () => {
                         />
                       )}
                       <div>
-                        <span className="font-medium">{transaction.products.name}</span>
-                        <div className="text-sm text-gray-500">{transaction.products.category}</div>
+                        <span className="font-medium">{transaction.products?.name || 'Unknown Product'}</span>
+                        <div className="text-sm text-gray-500">{transaction.products?.category || 'N/A'}</div>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div>
-                      <span className="font-medium">{transaction.buyers.full_name}</span>
-                      <div className="text-sm text-gray-500">{transaction.buyers.email}</div>
+                      <span className="font-medium">{transaction.buyers?.full_name || 'Unknown Buyer'}</span>
+                      <div className="text-sm text-gray-500">{transaction.buyers?.email || 'N/A'}</div>
                     </div>
                   </TableCell>
                   <TableCell>{transaction.quantity}</TableCell>
@@ -249,6 +297,12 @@ const TransactionManagement = () => {
                       <Button size="sm" variant="outline" onClick={() => viewTransaction(transaction)}>
                         <Eye className="h-4 w-4" />
                       </Button>
+                      <Button size="sm" variant="outline" onClick={() => editTransaction(transaction)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => deleteTransaction(transaction.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -258,6 +312,7 @@ const TransactionManagement = () => {
         </CardContent>
       </Card>
 
+      {/* View Transaction Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -348,6 +403,23 @@ const TransactionManagement = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Transaction Form Dialog */}
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editingTransaction ? 'Edit Transaction' : 'Add New Transaction'}</DialogTitle>
+            <DialogDescription>
+              {editingTransaction ? 'Update transaction details' : 'Create a new transaction'}
+            </DialogDescription>
+          </DialogHeader>
+          <TransactionForm 
+            transaction={editingTransaction}
+            onSave={handleTransactionSaved}
+            onCancel={() => setIsFormOpen(false)}
+          />
         </DialogContent>
       </Dialog>
     </div>
