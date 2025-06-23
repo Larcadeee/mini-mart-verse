@@ -2,14 +2,28 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import AdminAuth from "@/components/admin/AdminAuth";
-import AdminSetup from "@/components/admin/AdminSetup";
 import ProductManagement from "@/components/admin/ProductManagement";
 import BuyerManagement from "@/components/admin/BuyerManagement";
 import TransactionManagement from "@/components/admin/TransactionManagement";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { TrendingUp, Package, Users, DollarSign } from "lucide-react";
+
+interface TopBuyer {
+  full_name: string;
+  total_spent: number;
+  total_orders: number;
+}
+
+interface TopProduct {
+  name: string;
+  category: string;
+  total_sold: number;
+  revenue: number;
+}
 
 const Admin = () => {
   console.log('Admin page component rendered');
@@ -17,6 +31,14 @@ const Admin = () => {
   const [initializing, setInitializing] = useState(true);
   const [dbConnected, setDbConnected] = useState(false);
   const [checkingDb, setCheckingDb] = useState(true);
+  const [metrics, setMetrics] = useState({
+    totalSales: 0,
+    totalTransactions: 0,
+    totalProducts: 0,
+    totalBuyers: 0
+  });
+  const [topBuyers, setTopBuyers] = useState<TopBuyer[]>([]);
+  const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
 
   // Check database connection on mount
   useEffect(() => {
@@ -59,6 +81,102 @@ const Admin = () => {
       return () => clearTimeout(timer);
     }
   }, [loading, adminUser, checkingDb, dbConnected]);
+
+  useEffect(() => {
+    if (adminUser && dbConnected) {
+      fetchMetrics();
+      fetchTopBuyers();
+      fetchTopProducts();
+    }
+  }, [adminUser, dbConnected]);
+
+  const fetchMetrics = async () => {
+    try {
+      // Fetch total sales
+      const { data: transactions } = await supabase
+        .from('transactions')
+        .select('total_amount');
+      
+      const totalSales = transactions?.reduce((sum, t) => sum + Number(t.total_amount), 0) || 0;
+      
+      // Fetch total products
+      const { data: products } = await supabase
+        .from('products')
+        .select('id');
+      
+      // Fetch total buyers
+      const { data: buyers } = await supabase
+        .from('buyers')
+        .select('id');
+
+      setMetrics({
+        totalSales,
+        totalTransactions: transactions?.length || 0,
+        totalProducts: products?.length || 0,
+        totalBuyers: buyers?.length || 0
+      });
+    } catch (error) {
+      console.error('Error fetching metrics:', error);
+    }
+  };
+
+  const fetchTopBuyers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('buyers')
+        .select('full_name, total_spent, total_orders')
+        .order('total_spent', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      setTopBuyers(data || []);
+    } catch (error) {
+      console.error('Error fetching top buyers:', error);
+    }
+  };
+
+  const fetchTopProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select(`
+          quantity,
+          total_amount,
+          products (
+            name,
+            category
+          )
+        `);
+
+      if (error) throw error;
+
+      // Group by product and calculate totals
+      const productStats = data?.reduce((acc: any, transaction: any) => {
+        const productName = transaction.products?.name;
+        if (productName) {
+          if (!acc[productName]) {
+            acc[productName] = {
+              name: productName,
+              category: transaction.products.category,
+              total_sold: 0,
+              revenue: 0
+            };
+          }
+          acc[productName].total_sold += transaction.quantity;
+          acc[productName].revenue += Number(transaction.total_amount);
+        }
+        return acc;
+      }, {}) || {};
+
+      const sortedProducts = Object.values(productStats)
+        .sort((a: any, b: any) => b.revenue - a.revenue)
+        .slice(0, 5);
+
+      setTopProducts(sortedProducts as TopProduct[]);
+    } catch (error) {
+      console.error('Error fetching top products:', error);
+    }
+  };
 
   console.log('Admin render state - loading:', loading, 'initializing:', initializing, 'adminUser:', !!adminUser, 'dbConnected:', dbConnected, 'checkingDb:', checkingDb);
 
@@ -127,18 +245,115 @@ const Admin = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="setup" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="setup">Setup</TabsTrigger>
+        {/* Metrics Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">₱{metrics.totalSales.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">From all transactions</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics.totalTransactions}</div>
+              <p className="text-xs text-muted-foreground">All time orders</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics.totalProducts}</div>
+              <p className="text-xs text-muted-foreground">In inventory</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Buyers</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{metrics.totalBuyers}</div>
+              <p className="text-xs text-muted-foreground">Registered users</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Top Performers */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Top Buyers</CardTitle>
+              <CardDescription>Highest spending customers</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {topBuyers.map((buyer, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{buyer.full_name}</p>
+                      <p className="text-sm text-gray-500">{buyer.total_orders} orders</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold">₱{buyer.total_spent.toFixed(2)}</p>
+                    </div>
+                  </div>
+                ))}
+                {topBuyers.length === 0 && (
+                  <p className="text-gray-500 text-center py-4">No buyer data available</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Top Products</CardTitle>
+              <CardDescription>Best performing products by revenue</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {topProducts.map((product, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">{product.name}</p>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="secondary" className="text-xs">{product.category}</Badge>
+                        <span className="text-sm text-gray-500">{product.total_sold} sold</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold">₱{product.revenue.toFixed(2)}</p>
+                    </div>
+                  </div>
+                ))}
+                {topProducts.length === 0 && (
+                  <p className="text-gray-500 text-center py-4">No product data available</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs defaultValue="products" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="products">Products</TabsTrigger>
             <TabsTrigger value="buyers">Buyers</TabsTrigger>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
           </TabsList>
-
-          <TabsContent value="setup" className="mt-6">
-            <AdminSetup />
-          </TabsContent>
 
           <TabsContent value="products" className="mt-6">
             <ProductManagement />
@@ -150,18 +365,6 @@ const Admin = () => {
 
           <TabsContent value="transactions" className="mt-6">
             <TransactionManagement />
-          </TabsContent>
-
-          <TabsContent value="reports" className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Reports</CardTitle>
-                <CardDescription>Analytics and reporting tools</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p>Reports functionality coming soon...</p>
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </div>

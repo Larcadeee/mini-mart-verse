@@ -185,7 +185,7 @@ const Buyers = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       <Header
         user={user}
         userProfile={userProfile}
@@ -197,7 +197,7 @@ const Buyers = () => {
 
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-theme-primary mb-4">
+          <h1 className="text-4xl font-bold text-blue-800 mb-4">
             Browse Our Snacks
           </h1>
           <p className="text-xl text-gray-600">Discover delicious Filipino treats</p>
@@ -207,7 +207,7 @@ const Buyers = () => {
         {featuredProducts.length > 0 && (
           <section className="mb-16">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-theme-primary mb-4">Featured Snacks</h2>
+              <h2 className="text-3xl font-bold text-blue-800 mb-4">Featured Snacks</h2>
               <p className="text-lg text-gray-600">Our handpicked favorites just for you</p>
             </div>
             <div className="bg-white rounded-lg shadow-lg p-6">
@@ -226,7 +226,7 @@ const Buyers = () => {
         {/* All Products Section */}
         <section>
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-theme-primary mb-4">All Products</h2>
+            <h2 className="text-3xl font-bold text-blue-800 mb-4">All Products</h2>
             <p className="text-lg text-gray-600">Browse our complete collection</p>
           </div>
           <div className="bg-white rounded-lg shadow-lg p-6">

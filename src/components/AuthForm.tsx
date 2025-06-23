@@ -65,7 +65,7 @@ const AuthForm = ({ onSuccess }: AuthFormProps) => {
             navigate('/admin');
           } else {
             toast.success(`Welcome back, ${profile?.full_name || email}!`);
-            navigate('/');
+            navigate('/buyer-dashboard');
           }
         }
       } else {
@@ -88,7 +88,7 @@ const AuthForm = ({ onSuccess }: AuthFormProps) => {
           navigate('/admin');
         } else {
           toast.success('Account created successfully! Please check your email to verify your account.');
-          navigate('/');
+          navigate('/buyer-dashboard');
         }
       }
       onSuccess();
@@ -101,10 +101,10 @@ const AuthForm = ({ onSuccess }: AuthFormProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl text-theme-primary">
+          <CardTitle className="text-2xl text-blue-800">
             {isLogin ? 'Welcome Back' : 'Create Account'}
           </CardTitle>
           <CardDescription>
@@ -189,7 +189,7 @@ const AuthForm = ({ onSuccess }: AuthFormProps) => {
 
             <Button 
               type="submit" 
-              className="w-full bg-theme-primary hover:bg-theme-primary/90"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               disabled={loading}
             >
               <User className="h-4 w-4 mr-2" />
@@ -201,7 +201,7 @@ const AuthForm = ({ onSuccess }: AuthFormProps) => {
             <Button
               variant="link"
               onClick={() => setIsLogin(!isLogin)}
-              className="text-theme-primary hover:text-theme-primary/80"
+              className="text-blue-600 hover:text-blue-700"
             >
               {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </Button>

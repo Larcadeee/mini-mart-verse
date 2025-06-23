@@ -148,9 +148,13 @@ const Cart = () => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
   };
 
+  const handleBackToBuyers = () => {
+    navigate('/buyers');
+  };
+
   if (loading || cartLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="text-lg">Loading cart...</div>
       </div>
     );
@@ -158,7 +162,7 @@ const Cart = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-lg mb-4">Please sign in to view your cart</p>
           <Button onClick={() => navigate('/auth')}>Sign In</Button>
@@ -168,7 +172,7 @@ const Cart = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-orange-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       {/* Header */}
       <header className="bg-white shadow-lg border-b border-gray-200">
         <div className="container mx-auto px-4 py-4">
@@ -176,19 +180,19 @@ const Cart = () => {
             <div className="flex items-center space-x-4">
               <Button
                 variant="outline"
-                onClick={() => navigate(-1)}
+                onClick={handleBackToBuyers}
                 className="flex items-center space-x-2"
               >
                 <ArrowLeft className="h-4 w-4" />
-                <span>Back</span>
+                <span>Back to Shop</span>
               </Button>
               
               <div className="flex items-center space-x-2">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-orange-500 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
                   <ShoppingCart className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-orange-500 bg-clip-text text-transparent">
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                     Your Cart
                   </h1>
                   <p className="text-sm text-gray-600">{getTotalItems()} items</p>
@@ -207,8 +211,8 @@ const Cart = () => {
               <h2 className="text-2xl font-bold text-gray-600 mb-2">Your cart is empty</h2>
               <p className="text-gray-500 mb-6">Add some delicious Filipino snacks to get started!</p>
               <Button
-                onClick={() => navigate('/')}
-                className="bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600"
+                onClick={handleBackToBuyers}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
               >
                 Start Shopping
               </Button>
@@ -309,7 +313,7 @@ const Cart = () => {
                   </div>
 
                   <Button
-                    className="w-full bg-gradient-to-r from-blue-600 to-orange-500 hover:from-blue-700 hover:to-orange-600 text-white py-3"
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3"
                     onClick={() => toast.success('Checkout functionality coming soon!')}
                   >
                     Proceed to Checkout

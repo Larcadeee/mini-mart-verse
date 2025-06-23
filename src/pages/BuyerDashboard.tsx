@@ -5,9 +5,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/layout/Header";
+import HeroSection from "@/components/landing/HeroSection";
+import FeaturesSection from "@/components/landing/FeaturesSection";
 import ProductGrid from "@/components/landing/ProductGrid";
 import Footer from "@/components/layout/Footer";
 import LoadingSkeleton from "@/components/ui/LoadingSkeleton";
+import VideoPlayer from "@/components/landing/VideoPlayer";
 
 interface Product {
   id: string;
@@ -28,7 +31,6 @@ interface UserProfile {
 const BuyerDashboard = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const [products, setProducts] = useState<Product[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [cartItems, setCartItems] = useState<string[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
@@ -41,7 +43,7 @@ const BuyerDashboard = () => {
       navigate('/auth');
       return;
     }
-    fetchProducts();
+    fetchFeaturedProducts();
     fetchCartItems();
     fetchUserProfile();
   }, [user, navigate]);
@@ -67,21 +69,21 @@ const BuyerDashboard = () => {
     }
   };
 
-  const fetchProducts = async () => {
+  const fetchFeaturedProducts = async () => {
     try {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .order('created_at', { ascending: false });
+        .eq('is_featured', true)
+        .order('created_at', { ascending: false })
+        .limit(4);
 
       if (error) throw error;
       
-      const allProducts = data || [];
-      setProducts(allProducts);
-      setFeaturedProducts(allProducts.filter(product => product.is_featured));
+      setFeaturedProducts(data || []);
     } catch (error) {
-      console.error('Error fetching products:', error);
-      toast.error('Failed to load products');
+      console.error('Error fetching featured products:', error);
+      toast.error('Failed to load featured products');
     } finally {
       setLoading(false);
     }
@@ -141,12 +143,16 @@ const BuyerDashboard = () => {
     toast.success('Signed out successfully');
   };
 
+  const handleShopNow = () => {
+    navigate('/buyers');
+  };
+
   if (loading) {
     return <LoadingSkeleton />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       <Header
         user={user}
         userProfile={userProfile}
@@ -156,48 +162,40 @@ const BuyerDashboard = () => {
         onSignOut={handleSignOut}
       />
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-theme-primary mb-4">
-            Welcome, {userProfile?.full_name || user?.email}!
-          </h1>
-          <p className="text-xl text-gray-600">Your Snack Dashboard</p>
-        </div>
+      {/* Hero Section */}
+      <HeroSection user={user} onShopNow={handleShopNow} />
 
-        {/* Featured Snacks Section */}
-        {featuredProducts.length > 0 && (
-          <section className="mb-16">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-theme-primary mb-4">Featured Snacks</h2>
-              <p className="text-lg text-gray-600">Our handpicked favorites just for you</p>
-            </div>
-            <ProductGrid
-              products={featuredProducts}
-              searchQuery=""
-              cartItems={cartItems}
-              wishlist={wishlist}
-              onAddToCart={addToCart}
-              onToggleWishlist={toggleWishlist}
-            />
-          </section>
-        )}
-
-        {/* All Snacks Section */}
-        <section>
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-theme-primary mb-4">All Snacks</h2>
-            <p className="text-lg text-gray-600">Browse our complete collection</p>
+      {/* Featured Snacks Section with Video */}
+      <section className="py-16 px-4">
+        <div className="container mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-blue-800 mb-4">Featured Snacks</h2>
+            <p className="text-xl text-gray-600">Our handpicked favorites just for you</p>
           </div>
-          <ProductGrid
-            products={products}
-            searchQuery={searchQuery}
-            cartItems={cartItems}
-            wishlist={wishlist}
-            onAddToCart={addToCart}
-            onToggleWishlist={toggleWishlist}
-          />
-        </section>
-      </div>
+          
+          {/* Video Player */}
+          <div className="mb-12">
+            <VideoPlayer />
+          </div>
+
+          {/* Featured Products Grid */}
+          {featuredProducts.length > 0 && (
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <ProductGrid
+                products={featuredProducts}
+                searchQuery=""
+                cartItems={cartItems}
+                wishlist={wishlist}
+                onAddToCart={addToCart}
+                onToggleWishlist={toggleWishlist}
+              />
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Why Choose MiniMart Online Section */}
+      <FeaturesSection />
 
       <Footer />
     </div>
