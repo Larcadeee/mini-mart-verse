@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,7 +28,7 @@ interface TopProduct {
 
 const Admin = () => {
   const navigate = useNavigate();
-  const { adminUser, loading, login } = useAdminAuth();
+  const { adminUser, loading, login, logout } = useAdminAuth();
   const [activeTab, setActiveTab] = useState('products');
   const [initializing, setInitializing] = useState(true);
   const [dbConnected, setDbConnected] = useState(false);
@@ -49,7 +48,7 @@ const Admin = () => {
       try {
         console.log('Checking database connection...');
         const { data, error } = await supabase
-          .from('admin_users')
+          .from('products')
           .select('id')
           .limit(1);
         
@@ -182,8 +181,25 @@ const Admin = () => {
   };
 
   const handleSignOut = async () => {
-    navigate('/');
-    toast.success('Signed out successfully');
+    console.log('Admin sign out initiated');
+    
+    try {
+      // Clear admin session
+      logout();
+      
+      // Clear any other stored data
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Navigate to home page
+      navigate('/');
+      
+      // Show success message
+      toast.success('Signed out successfully');
+    } catch (error) {
+      console.error('Error during sign out:', error);
+      toast.error('Error signing out');
+    }
   };
 
   console.log('Admin render state - loading:', loading, 'initializing:', initializing, 'adminUser:', !!adminUser, 'dbConnected:', dbConnected, 'checkingDb:', checkingDb);

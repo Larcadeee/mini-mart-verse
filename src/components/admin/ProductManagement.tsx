@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, Upload } from "lucide-react";
+import { Plus, Edit, Trash2, Upload, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -29,6 +30,7 @@ const ProductManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -39,34 +41,70 @@ const ProductManagement = () => {
     is_featured: false
   });
 
-  // Optimized fetch function with error handling and performance improvements
+  // Enhanced fetch function with better error handling
   const fetchProducts = useCallback(async () => {
     try {
-      console.log('Fetching products...');
+      console.log('Starting to fetch products...');
       setLoading(true);
+      setError(null);
       
-      // Use select with specific columns for better performance
-      const { data, error } = await supabase
+      // Test database connection first
+      const { data: testData, error: testError } = await supabase
         .from('products')
-        .select('id, name, description, price, image_url, category, stock, is_featured, created_at')
+        .select('count')
+        .limit(1);
+
+      if (testError) {
+        console.error('Database connection test failed:', testError);
+        throw new Error(`Database connection failed: ${testError.message}`);
+      }
+
+      console.log('Database connection successful, fetching all products...');
+      
+      // Fetch all products with explicit column selection
+      const { data, error, count } = await supabase
+        .from('products')
+        .select('id, name, description, price, image_url, category, stock, is_featured, created_at', { count: 'exact' })
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Supabase error:', error);
-        throw error;
+        console.error('Error fetching products:', error);
+        throw new Error(`Failed to fetch products: ${error.message}`);
       }
       
-      console.log('Fetched products successfully:', data?.length || 0, 'products');
-      setProducts(data || []);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      toast.error('Failed to load products. Please check your connection.');
+      console.log('Products fetched successfully:', {
+        count: count,
+        dataLength: data?.length || 0,
+        data: data
+      });
+      
+      // Ensure we have an array and validate the data
+      const validProducts = (data || []).filter(product => 
+        product && typeof product.id === 'string' && product.name
+      );
+      
+      console.log('Valid products after filtering:', validProducts.length);
+      setProducts(validProducts);
+      
+      if (validProducts.length === 0) {
+        console.log('No products found in database');
+        toast.info('No products found. Add your first product to get started!');
+      } else {
+        console.log(`Successfully loaded ${validProducts.length} products`);
+      }
+      
+    } catch (error: any) {
+      console.error('Error in fetchProducts:', error);
+      setError(error.message || 'Failed to load products');
+      toast.error(`Failed to load products: ${error.message}`);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    console.log('ProductManagement component mounted, fetching products...');
     fetchProducts();
   }, [fetchProducts]);
 
@@ -76,6 +114,7 @@ const ProductManagement = () => {
 
     try {
       setUploadingImage(true);
+      console.log('Uploading image:', file.name);
       
       // Create a unique filename
       const fileExt = file.name.split('.').pop();
@@ -98,7 +137,7 @@ const ProductManagement = () => {
 
       setFormData({ ...formData, image_url: data.publicUrl });
       toast.success('Image uploaded successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error uploading image:', error);
       toast.error('Failed to upload image');
     } finally {
@@ -154,10 +193,10 @@ const ProductManagement = () => {
       setIsDialogOpen(false);
       setEditingProduct(null);
       resetForm();
-      await fetchProducts();
-    } catch (error) {
+      await fetchProducts(); // Refresh the product list
+    } catch (error: any) {
       console.error('Error saving product:', error);
-      toast.error('Failed to save product');
+      toast.error(`Failed to save product: ${error.message}`);
     }
   };
 
@@ -192,10 +231,10 @@ const ProductManagement = () => {
       }
       
       toast.success('Product deleted successfully');
-      await fetchProducts();
-    } catch (error) {
+      await fetchProducts(); // Refresh the product list
+    } catch (error: any) {
       console.error('Error deleting product:', error);
-      toast.error('Failed to delete product');
+      toast.error(`Failed to delete product: ${error.message}`);
     }
   };
 
@@ -217,11 +256,40 @@ const ProductManagement = () => {
     setIsDialogOpen(true);
   };
 
+  // Loading state
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         <span className="ml-2">Loading products...</span>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold">Product Management</h2>
+          <Button onClick={openAddDialog} className="bg-theme-primary hover:bg-theme-primary/90">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Product
+          </Button>
+        </div>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center py-8">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-red-700 mb-2">Failed to Load Products</h3>
+              <p className="text-red-600 mb-4">{error}</p>
+              <Button onClick={fetchProducts} variant="outline">
+                Try Again
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -365,12 +433,17 @@ const ProductManagement = () => {
           {products.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <p>No products found. Add your first product to get started!</p>
+              <Button onClick={openAddDialog} className="mt-4" variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Product
+              </Button>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Product</TableHead>
+                  <TableHead>ID</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Price</TableHead>
                   <TableHead>Stock</TableHead>
@@ -384,16 +457,29 @@ const ProductManagement = () => {
                     <TableCell>
                       <div className="flex items-center space-x-3">
                         {product.image_url && (
-                          <img src={product.image_url} alt={product.name} className="w-10 h-10 rounded object-cover" />
+                          <img 
+                            src={product.image_url} 
+                            alt={product.name} 
+                            className="w-10 h-10 rounded object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = '/placeholder.svg';
+                            }}
+                          />
                         )}
                         <div>
                           <div className="font-medium">{product.name}</div>
-                          <div className="text-sm text-gray-500">{product.description?.substring(0, 50)}...</div>
+                          <div className="text-sm text-gray-500">
+                            {product.description?.substring(0, 50)}{product.description && product.description.length > 50 ? '...' : ''}
+                          </div>
                         </div>
                       </div>
                     </TableCell>
+                    <TableCell>
+                      <span className="text-xs text-gray-500 font-mono">{product.id.substring(0, 8)}...</span>
+                    </TableCell>
                     <TableCell>{product.category}</TableCell>
-                    <TableCell>₱{product.price.toFixed(2)}</TableCell>
+                    <TableCell>₱{Number(product.price).toFixed(2)}</TableCell>
                     <TableCell>{product.stock}</TableCell>
                     <TableCell>
                       <div className="flex flex-col space-y-1">

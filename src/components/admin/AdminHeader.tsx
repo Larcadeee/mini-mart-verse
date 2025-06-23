@@ -20,6 +20,19 @@ const AdminHeader = ({ adminUser, onSignOut, activeTab, onTabChange }: AdminHead
     { id: 'transactions', label: 'Transactions', icon: CreditCard }
   ];
 
+  const handleSignOut = () => {
+    console.log('Admin sign out triggered');
+    
+    // Clear localStorage
+    localStorage.removeItem('admin_user');
+    
+    // Call the parent sign out handler
+    onSignOut();
+    
+    // Navigate to home page
+    navigate('/');
+  };
+
   return (
     <header className="bg-white shadow-lg border-b border-gray-200">
       <div className="container mx-auto px-4 py-4">
@@ -71,7 +84,7 @@ const AdminHeader = ({ adminUser, onSignOut, activeTab, onTabChange }: AdminHead
             <Button
               variant="outline"
               size="sm"
-              onClick={onSignOut}
+              onClick={handleSignOut}
             >
               <LogOut className="h-4 w-4 mr-2" />
               Sign Out
